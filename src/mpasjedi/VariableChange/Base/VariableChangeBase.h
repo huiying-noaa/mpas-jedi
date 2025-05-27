@@ -14,6 +14,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include "mpasjedi/VariableChange/VaderCookbook.h"
+
 #include "oops/base/ParameterTraitsVariables.h"
 #include "oops/base/Variables.h"
 #include "oops/util/AssociativeContainers.h"
@@ -24,6 +26,7 @@
 #include "oops/util/parameters/ParametersOrConfiguration.h"
 #include "oops/util/parameters/PolymorphicParameter.h"
 #include "oops/util/Printable.h"
+#include "vader/VaderParameters.h"
 
 namespace mpas {
   class Geometry;
@@ -37,6 +40,9 @@ class VariableChangeParametersBase : public oops::Parameters {
   oops::OptionalParameter<oops::Variables> inputVariables{"input variables", this};
   oops::OptionalParameter<oops::Variables> outputVariables{"output variables", this};
   oops::OptionalParameter<std::string> name{"variable change name", this};
+  oops::Parameter<std::map<std::string, std::vector<std::string>>> vaderCustomCookbook{
+    "vader custom cookbook", vaderMPASCustomCookbook(), this};
+  oops::Parameter<vader::VaderParameters> vader{"vader", {}, this};
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -72,6 +78,11 @@ class VariableChangeParametersWrapper : public oops::Parameters {
  public:
   oops::PolymorphicParameter<VariableChangeParametersBase, VariableChangeFactory>
     variableChangeParameters{"variable change name", "default", this};
+  // During the transition to Vader it is useful to run with either just vader or just the mpas-jedi
+  // variable transforms to avoid not knowing which part of the code is doing the transforms
+  oops::Parameter<bool> run_vader{"run vader", true, this};
+  oops::Parameter<bool> run_mpasjedi{"run mpasjedi", true, this};
+
 };
 
 // -------------------------------------------------------------------------------------------------

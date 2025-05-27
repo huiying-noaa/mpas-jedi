@@ -14,8 +14,9 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "oops/util/Printable.h"
-
+#include "vader/vader.h"
 #include "mpasjedi/VariableChange/Base/VariableChangeBase.h"
+
 
 namespace mpas {
 
@@ -43,6 +44,10 @@ class VariableChange : public util::Printable {
  private:
   void print(std::ostream &) const override;
   std::unique_ptr<VariableChangeBase> variableChange_;
+  bool run_mpasjedi_;
+  bool run_vader_;
+  std::unique_ptr<vader::Vader> vader_;
+
 };
 
 // -------------------------------------------------------------------------------------------------

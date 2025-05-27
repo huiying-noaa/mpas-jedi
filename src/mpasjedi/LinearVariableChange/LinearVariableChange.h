@@ -21,7 +21,9 @@
 #include "oops/util/parameters/RequiredParameter.h"
 #include "oops/util/Printable.h"
 
+#include "vader/vader.h"
 #include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
+
 
 namespace mpas {
 
@@ -31,7 +33,8 @@ class LinearVariableChangeParameters : public oops::Parameters {
   OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters, oops::Parameters)
  public:
   // Wrapper to LinearVariableChange parameters
-  LinearVariableChangeParametersWrapper linearVariableChangeParametersWrapper{this};
+//cltthink  LinearVariableChangeParametersWrapper linearVariableChangeParametersWrapper{this};
+
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -53,8 +56,11 @@ class LinearVariableChange : public util::Printable {
  private:
   void print(std::ostream &) const override;
   const Geometry & geom_;
-  LinearVariableChangeParameters params_;
+  LinearVariableChangeParametersWrapper params_;
   std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
+  void initVaderTLAD(oops::Variables &) const;
+  std::unique_ptr<vader::Vader> vader_;
+  mutable oops::Variables varsVaderPopulates_;
 };
 
 // -------------------------------------------------------------------------------------------------

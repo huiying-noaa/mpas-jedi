@@ -24,12 +24,26 @@ namespace mpas {
 // -------------------------------------------------------------------------------------------------
   typedef VariableChangeParameters Parameters_;
 
-VariableChange::VariableChange(const eckit::Configuration & config, const Geometry & geometry) {
+VariableChange::VariableChange(const eckit::Configuration & config, const Geometry & geometry)
+  : vader_(), run_vader_(), run_mpasjedi_()
+{
   // Create the variable change
-  VariableChangeParameters params;
+  VariableChangeParametersWrapper params;
   params.deserialize(config);
+    run_vader_ = params.run_vader.value();
+  run_mpasjedi_ = params.run_mpasjedi.value();
+  eckit::LocalConfiguration variableChangeConfig = params.toConfiguration();
+  ModelData modelData{geometry};
+  eckit::LocalConfiguration vaderConfig;
+  vaderConfig.set(vader::configCookbookKey,
+                  variableChangeConfig.getSubConfiguration("vader custom cookbook"));
+  vaderConfig.set(vader::configModelVarsKey, modelData.modelData());
+
+  // Create vader with mpas-jedi custom cookbook
+  vader_.reset(new vader::Vader(params.variableChangeParameters.value().vader,
+                                vaderConfig));
   variableChange_.reset(VariableChangeFactory::create(geometry,
-                        params.variableChangeParametersWrapper.variableChangeParameters.value()));
+                        params.variableChangeParameters.value()));
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -42,13 +56,39 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Trace
   oops::Log::trace() << "VariableChange::changeVar starting" << std::endl;
 
+//clthtink vars should be long names ,s in mpasjedi , howow
   // If all variables already in incoming state just remove the no longer needed fields
   if (vars == x.variables()) {
     oops::Log::info() << "VariableChange::changeVar done (identity)" << std::endl;
     return;
   }
-
   oops::Log::trace() << "VariableChange::changeVar, vars" << vars << std::endl;
+  // Call Vader to perform first set of variable transforms
+  // ------------------------------------------------------
+
+  // Record start variables
+  oops::Variables varsFilled = x.variables();
+
+  oops::Variables varsVader = vars;
+  varsVader -= varsFilled;  // Pass only the needed variables
+
+
+  // Call Vader. On entry, varsVader holds the vars requested from Vader; on exit,
+  // it holds the vars NOT fulfilled by Vader, i.e., the vars still to be requested elsewhere.
+  // vader_->changeVar also returns the variables fulfilled by Vader. These variables are
+  // allocated and populated and added to the FieldSet (xfs).
+  if (run_vader_) {
+    atlas::FieldSet xfs;
+    x.toFieldSet(xfs);
+    const oops::Variables varsVaderPopulated = vader_->changeVar(xfs, varsVader);
+    if (varsVaderPopulated.size() > 0) {
+      varsFilled += varsVaderPopulated;
+//cltthink      x.updateFields(varsFilled);
+      x.fromFieldSet(xfs);
+    }
+  }
+
+
   // Create output state
   State xout(x.geometry(), vars, x.time());
 
@@ -72,6 +112,28 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) c
   if (vars == x.variables()) {
     oops::Log::info() << "VariableChange::changeVarInverse done (identity)" << std::endl;
     return;
+  }
+
+  // Call Vader to perform first set of variable transforms
+  // ------------------------------------------------------
+
+  // Record start variables
+  oops::Variables varsFilled = x.variables();
+
+  oops::Variables varsVader = vars;
+  varsVader -= varsFilled;  // Pass only the needed variables
+
+  // Call Vader. On entry, varsVader holds the vars requested from Vader; on exit,
+  // it holds the vars NOT fulfilled by Vader, i.e., the vars still to be requested elsewhere.
+  // vader_->changeVar also returns the variables fulfilled by Vader. These variables are
+  // allocated and populated and added to the FieldSet (xfs).
+  atlas::FieldSet xfs;
+  x.toFieldSet(xfs);
+  const oops::Variables varsVaderPopulated = vader_->changeVar(xfs, varsVader);
+  if (varsVaderPopulated.size() > 0) {
+    varsFilled += varsVaderPopulated;
+//cltthink    x.updateFields(varsFilled);
+    x.fromFieldSet(xfs);
   }
 
   // Create output state
