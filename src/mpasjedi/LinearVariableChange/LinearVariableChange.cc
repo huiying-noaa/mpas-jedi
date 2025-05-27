@@ -33,7 +33,7 @@ LinearVariableChange::LinearVariableChange(const Geometry & geom,
                   variableChangeConfig.getSubConfiguration("vader custom cookbook"));
 //cltthink  vaderConfig.set(vader::configModelVarsKey, modelData.modelData());
 
-  // Create vader with fv3-jedi custom cookbook
+  // Create vader with mpas-jedi custom cookbook
   vader_.reset(new vader::Vader(params_.linearVariableChangeParameters.value().vader,
                                 vaderConfig));
 
