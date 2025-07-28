@@ -91,9 +91,11 @@ list( APPEND mpas_testinput
   testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
+  testinput/dirac_diffusion_duplicated.yaml
+  testinput/dirac_diffusion_univariate.yaml
   testinput/dirac_noloc.yaml
   testinput/dirac_spectral_1.yaml
-  testinput/dirac_spectral_no_wind.yaml
+  testinput/dirac_spectral_loc.yaml
   testinput/eda_3dhybrid.yaml
   testinput/eda_3dhybrid_1.yaml
   testinput/eda_3dhybrid_2.yaml
@@ -129,7 +131,8 @@ list( APPEND mpas_testinput
   testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
-  testinput/process_perts_spectral_no_wind.yaml
+  testinput/parameters_diffusion.yaml
+  testinput/process_perts_spectral.yaml
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
   testinput/state.yaml
@@ -165,9 +168,11 @@ list( APPEND mpas_testoutput
   testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
+  testoutput/dirac_diffusion_univariate.ref
+  testoutput/dirac_diffusion_duplicated.ref
   testoutput/dirac_noloc.ref
   testoutput/dirac_spectral_1.ref
-  testoutput/dirac_spectral_no_wind.ref
+  testoutput/dirac_spectral_loc.ref
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
@@ -183,7 +188,7 @@ list( APPEND mpas_testoutput
   testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
-  testoutput/process_perts_spectral_no_wind.ref
+  testoutput/process_perts_spectral.ref
   testoutput/rtpp.ref
   testoutput/ens_mean_variance.ref
 )
@@ -417,6 +422,8 @@ endif( ${rttov_FOUND} )
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
 #spectral outputs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/spectral)
+#diffusion outputs
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/diffusion)
 #ObsSpaces
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
@@ -777,6 +784,11 @@ add_mpasjedi_application_test(
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
+add_mpasjedi_application_test(
+    NAME parameters_diffusion
+    APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
 #gen_ens_pert_B
 add_mpasjedi_application_test(
     APPLICATION gen_ens_pert_B
@@ -797,6 +809,18 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
+    NAME dirac_diffusion_duplicated
+    APPLICATION error_covariance_toolbox
+    DEPENDS parameters_diffusion
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_diffusion_univariate
+    APPLICATION error_covariance_toolbox
+    DEPENDS parameters_diffusion
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
     NAME dirac_noloc
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
@@ -809,14 +833,14 @@ if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
         ${RECALIBRATE})
     
     add_mpasjedi_application_test(
-        NAME process_perts_spectral_no_wind
+        NAME process_perts_spectral
         APPLICATION process_perts
         ${RECALIBRATE})
 
     add_mpasjedi_application_test(
-        NAME dirac_spectral_no_wind
+        NAME dirac_spectral_loc
         APPLICATION error_covariance_toolbox
-        DEPENDS process_perts_spectral_no_wind
+        DEPENDS process_perts_spectral
         ${RECALIBRATE})
 endif()
 
