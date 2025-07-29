@@ -81,6 +81,7 @@ extern "C" {
                                     real_type[]);
   void mpas_increment_deserialize_f90(const F90inc &, const std::size_t &,
                                       const real_type[], const std::size_t &);
+  void mpas_increment_update_fields_f90(F90inc &, const F90geom &, const oops::Variables &);
   void mpas_increment_getpoint_f90(const F90inc &, const F90iter &, double &, const int &);
   void mpas_increment_setpoint_f90(F90inc &, const F90iter &, const double &, const int &);
 };  // extern "C"

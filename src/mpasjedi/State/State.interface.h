@@ -48,6 +48,7 @@ extern "C" {
                                 real_type[]);
   void mpas_state_deserialize_f90(const F90state &, const std::size_t &,
                                   const real_type[], const std::size_t &);
+  void mpas_state_update_fields_f90(F90state &, const F90geom &, const oops::Variables &);
   void mpas_state_read_file_f90(const F90state &,
                                 const eckit::Configuration &,
                                 util::DateTime &);

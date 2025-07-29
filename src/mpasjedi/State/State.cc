@@ -220,6 +220,11 @@ void State::deserialize(const std::vector<real_type> & vect, size_t & index) {
   time_.deserialize(vect, index);
 }
 // -----------------------------------------------------------------------------
+void State::updateFields(const oops::Variables & newVars) {
+  vars_ = newVars;
+  mpas_state_update_fields_f90(keyState_, geom_.toFortran(), vars_);
+}
+// -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void State::analytic_init(const eckit::Configuration & config) {

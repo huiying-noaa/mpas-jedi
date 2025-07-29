@@ -50,6 +50,7 @@ list( APPEND mpasjedi_src_files
     ModelBias/ModelBiasCovariance.h
     ModelBias/ModelBiasIncrement.h
     ModelBias/ModelBias.h
+    ModelData/ModelData.cc
     ModelData/ModelData.h
     Saca/mpas_saca_interface_mod.F90
     Saca/module_mp_thompson_cldfra3.F90

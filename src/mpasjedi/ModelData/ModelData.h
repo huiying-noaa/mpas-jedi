@@ -25,13 +25,13 @@ class ModelData : public util::Printable {
  public:
   static const std::string classname() {return "mpas::ModelData";}
 
-  explicit ModelData(const Geometry &) {}
-  ~ModelData() {}
+  explicit ModelData(const Geometry &);
+  ~ModelData();
 
-  const eckit::LocalConfiguration modelData() const {return eckit::LocalConfiguration();}
+  const eckit::LocalConfiguration modelData() const;
 
  private:
-  void print(std::ostream & os) const {}
+  void print(std::ostream &) const override;
 };
 
 // -------------------------------------------------------------------------------------------------

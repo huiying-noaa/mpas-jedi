@@ -44,9 +44,9 @@ class VariableChange : public util::Printable {
  private:
   void print(std::ostream &) const override;
   std::unique_ptr<VariableChangeBase> variableChange_;
-  bool run_mpasjedi_;
-  bool run_vader_;
   std::unique_ptr<vader::Vader> vader_;
+  bool run_vader_;
+  bool run_mpasjedi_;
 
 };
 

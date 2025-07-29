@@ -95,8 +95,10 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: serial_size  => serial_size
      procedure :: serialize    => serialize_fields
      procedure :: deserialize  => deserialize_fields
+     procedure :: update       => update_fields
      procedure :: to_fieldset
      procedure :: from_fieldset
+
      !has
      generic, public :: has => has_field, has_fields
      procedure :: has_field
@@ -890,6 +892,93 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
    enddo
 
 end subroutine deserialize_fields
+
+! --------------------------------------------------------------------------------------------------
+subroutine update_fields(self, geom, new_vars)
+
+    implicit none
+
+    class(mpas_fields),   intent(inout)       :: self
+    type(mpas_geom),      intent(in), pointer :: geom
+    type(oops_variables), intent(in)          :: new_vars
+
+    !class(mpas_fields) :: tmp
+    type (mpas_pool_type), pointer :: tmpSubFields => null()
+    integer :: nf
+    character(len=MAXVARLEN), allocatable:: fldnames(:)
+
+    integer :: ivar
+   
+    ! 1. copy the existing arrays from "self" to "tmp"
+!1    !call tmp%create(self % geom, self % vars, self % vars_ci)  <--not working
+      !call copy_pool(self % subFields, tmp % subFields)
+
+    !  ---- we only need to save/copy "subFields", not all "mpas_fields" type
+!2    !nf = self % nf
+    !allocate( fldnames(nf) )
+    !do ivar = 1, nf
+    !   fldnames(ivar) = trim( self % fieldnames(ivar) )
+    !end do
+    !call self % populate()
+
+    call copy_pool(self % subFields, tmpSubFields)
+
+    ! 2. delete self
+    call self%delete()  ! every content of self will be deleted.
+
+    ! 3. create new self with "new_vars"
+    call self%create(self % geom, new_vars, new_vars)
+
+    ! 4. copy sub to sub
+    call da_copy_sub2sub_fields(tmpSubFields, self % subFields)
+
+    ! 5. delete "tmp"
+    !call tmp%delete()
+    call delete_pool(tmpSubFields)
+
+    !---- of create-----
+!    self % nf = vars % nvars()
+!    allocate(self % fldnames(self % nf))
+!    do ivar = 1, self % nf
+!       self % fldnames(ivar) = trim(vars % variable(ivar))
+!    end do
+!
+!    self % nf_ci = vars_ci % nvars()
+!    allocate(self % fldnames_ci(self % nf_ci))
+!    do ivar = 1, self % nf_ci
+!       self % fldnames_ci(ivar) = trim(vars_ci % variable(ivar))
+!    end do
+!
+!    write(message,*) "DEBUG: create_fields: self % fldnames(:) =",self % fldnames(:)
+!    call fckit_log%debug(message)
+!
+!    ! link geom
+!    if (associated(geom)) then
+!      self % geom => geom
+!    else
+!      call abor1_ftn("--> create_fields: geom not associated")
+!    end if
+!
+!    ! clock creation
+!    allocate(self % clock)
+!    call atm_simulation_clock_init(self % clock, self % geom % domain % blocklist % configs, ierr)
+!    if ( ierr .ne. 0 ) then
+!       call abor1_ftn("--> create_fields: atm_simulation_clock_init problem")
+!    end if
+!
+!    call self%populate()
+!
+!    ! pre-determine number of vertical levels for each variables
+!    allocate(self % nvert(self % nf))
+!    do ivar = 1, self % nf
+!       self % nvert(ivar) = getVertLevels(self % subFields, self % fldnames(ivar))
+!    end do
+
+    return
+
+end subroutine update_fields
+
+! --------------------------------------------------------------------------------------------------
 
 ! has
 function has_field(self, fieldname) result(has)

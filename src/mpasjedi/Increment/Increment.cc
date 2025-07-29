@@ -298,6 +298,11 @@ void Increment::deserialize(const std::vector<real_type> & vect,
   time_.deserialize(vect, index);
 }
 // -----------------------------------------------------------------------------
+void Increment::updateFields(const oops::Variables & newVars) {
+  vars_ = newVars;
+  mpas_increment_update_fields_f90(keyInc_, geom_.toFortran(), vars_);
+}
+// -----------------------------------------------------------------------------
 real_type Increment::norm() const {
   real_type zz = 0.0;
   mpas_increment_rms_f90(keyInc_, zz);

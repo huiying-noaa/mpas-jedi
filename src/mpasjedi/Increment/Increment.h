@@ -105,6 +105,9 @@ class Increment : public util::Printable,
   void serialize(std::vector<real_type> &) const override;
   void deserialize(const std::vector<real_type> &, size_t &) override;
 
+  /// Add or remove fields
+  void updateFields(const oops::Variables &);
+
   /// Member address accessors
   const Geometry & geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}

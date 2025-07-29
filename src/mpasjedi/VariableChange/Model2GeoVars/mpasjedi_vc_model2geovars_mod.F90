@@ -288,19 +288,26 @@ subroutine changevar(self, geom, xm, xg)
         call abor1_ftn('mpasjedi_vc_model2geovars::changevar: '&
                       &'state missing identity field for geovar => '//trim(geovar))
       end if
+
+    elseif (xm%has(geovar)) then
+      ! in case it is already done with VADER and included in xm
+      call xm%copy_to(geovar, xg, geovar)
+      write(0,*) 'BJJ Model2GeoVars, specific vars already done with VADER '// trim(geovar)
+
     else
 
       call xg%get(geovar, gdata)
 
       select case (trim(geovar))
 
-        case ( var_tv ) !-virtual_temperature
-          call xm%get('air_temperature', ptrr2_a)
-          call xm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_b)
-          allocate(r2_a(1:nVertLevels, 1:nCells))
-          call q_to_w( ptrr2_b(:,1:nCells), r2_a(:,1:nCells) )
-          call tw_to_tv( ptrr2_a(:,1:nCells), r2_a(:,1:nCells), gdata%r2%array(:,1:nCells) )
-          deallocate(r2_a)
+        !-- to VADER
+        !case ( var_tv ) !-virtual_temperature
+        !  call xm%get('air_temperature', ptrr2_a)
+        !  call xm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_b)
+        !  allocate(r2_a(1:nVertLevels, 1:nCells))
+        !  call q_to_w( ptrr2_b(:,1:nCells), r2_a(:,1:nCells) )
+        !  call tw_to_tv( ptrr2_a(:,1:nCells), r2_a(:,1:nCells), gdata%r2%array(:,1:nCells) )
+        !  deallocate(r2_a)
 
         case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           call xm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_a)

@@ -77,6 +77,9 @@ class State : public util::Printable,
      throw eckit::NotImplemented("MPASJEDI State::transpose not implemented", Here());
   }
 
+/// Add or remove fields
+  void updateFields(const oops::Variables &);
+
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
   void write(const eckit::Configuration &) const;

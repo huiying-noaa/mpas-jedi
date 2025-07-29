@@ -28,16 +28,15 @@ LinearVariableChange::LinearVariableChange(const Geometry & geom,
   params_.deserialize(config);
   
   eckit::LocalConfiguration variableChangeConfig = params_.toConfiguration();
+  ModelData modelData{geom};
   eckit::LocalConfiguration vaderConfig;
   vaderConfig.set(vader::configCookbookKey,
                   variableChangeConfig.getSubConfiguration("vader custom cookbook"));
-//cltthink  vaderConfig.set(vader::configModelVarsKey, modelData.modelData());
+  vaderConfig.set(vader::configModelVarsKey, modelData.modelData());
 
   // Create vader with mpas-jedi custom cookbook
   vader_.reset(new vader::Vader(params_.linearVariableChangeParameters.value().vader,
                                 vaderConfig));
-
-
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -66,7 +65,6 @@ void LinearVariableChange::changeVarTraj(const State & xfg, const oops::Variable
     oops::Variables outputVars = *lvc_params.outputVariables.value();
     ASSERT_MSG(outputVars == vars, "outputVariables in config file must match output "
           "variables passed to changeVarTraj");
-//clthink    oops::Variables ingredientVars = fieldsMetadata_.getLongNameFromAnyName(inputVars);
     oops::Variables ingredientVars =inputVars;
     initVaderTLAD(ingredientVars);
   }
@@ -111,13 +109,11 @@ void LinearVariableChange::changeVarTL(Increment & dx, const oops::Variables & v
     // Vader has done
 // now updateFields is not available in mpasjedi::Increment
 // assume vadar only works on a part (like tv ) pf the variables
-//cltthink    oops::Variables varsVader = dx.variables();
-//cltthink    varsVader += varsVaderPopulates_;
-//cltthink    dx.updateFields(varsVader);
+    oops::Variables varsVader = dx.variables();
+    varsVader += varsVaderPopulates_;
+    dx.updateFields(varsVader);
     dx.fromFieldSet(dxfs);
   }
-
-
 
   // Create output increment
   Increment dxout(dx.geometry(), vars, dx.time());
@@ -175,9 +171,9 @@ void LinearVariableChange::changeVarAD(Increment & dx, const oops::Variables & v
   Increment dxin(dx, true);  // true => full copy
   oops::Variables varsVaderDidntPopulate = dx.variables();
   varsVaderDidntPopulate -= varsVaderPopulates_;
-//cltthink  dxin.updateFields(varsVaderDidntPopulate);
+  dxin.updateFields(varsVaderDidntPopulate);
 
-//cltthink  dx.updateFields(varsVaderPopulates_);
+  dx.updateFields(varsVaderPopulates_);
 
 
 
@@ -185,7 +181,6 @@ void LinearVariableChange::changeVarAD(Increment & dx, const oops::Variables & v
   Increment dxout(dx.geometry(), vars, dx.time());
 
   // Call variable change
-//cltorg  linearVariableChange_->changeVarAD(dx, dxout);
   linearVariableChange_->changeVarAD(dxin, dxout);
 
   // dxout needs to temporarily have the variables that Vader populated put into it before
@@ -209,7 +204,7 @@ void LinearVariableChange::changeVarAD(Increment & dx, const oops::Variables & v
 
 
   // Copy data from temporary increment
-//cltthink  dx.updateFields(vars);
+  dx.updateFields(vars);
   dx.fromFieldSet(dxout_fs);
 
   oops::Log::trace() << "LinearVariableChange::changeVarAD done" << std::endl;

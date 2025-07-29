@@ -30,7 +30,7 @@ VariableChange::VariableChange(const eckit::Configuration & config, const Geomet
   // Create the variable change
   VariableChangeParametersWrapper params;
   params.deserialize(config);
-    run_vader_ = params.run_vader.value();
+  run_vader_ = params.run_vader.value();
   run_mpasjedi_ = params.run_mpasjedi.value();
   eckit::LocalConfiguration variableChangeConfig = params.toConfiguration();
   ModelData modelData{geometry};
@@ -83,17 +83,25 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
     const oops::Variables varsVaderPopulated = vader_->changeVar(xfs, varsVader);
     if (varsVaderPopulated.size() > 0) {
       varsFilled += varsVaderPopulated;
-//cltthink      x.updateFields(varsFilled);
+      oops::Log::info() << "VariableChange::changeVar, before updateFields, " << x << std::endl;
+      x.updateFields(varsFilled);
+      oops::Log::info() << "VariableChange::changeVar, after updateFields, " << x << std::endl;
       x.fromFieldSet(xfs);
+      oops::Log::info() << "VariableChange::changeVar, after fromFieldSet, " << x << std::endl;
     }
   }
 
-
+  // Perform mpas-jedi factory variable change
   // Create output state
   State xout(x.geometry(), vars, x.time());
 
   // Call variable change
-  variableChange_->changeVar(x, xout);
+  if (run_mpasjedi_) {
+    variableChange_->changeVar(x, xout);
+  }
+
+  // Remove fields not in output
+  x.updateFields(vars);
 
   // Copy data from temporary state
   x = xout;
@@ -132,7 +140,7 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) c
   const oops::Variables varsVaderPopulated = vader_->changeVar(xfs, varsVader);
   if (varsVaderPopulated.size() > 0) {
     varsFilled += varsVaderPopulated;
-//cltthink    x.updateFields(varsFilled);
+    x.updateFields(varsFilled);
     x.fromFieldSet(xfs);
   }
 

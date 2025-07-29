@@ -24,4 +24,4 @@ namespace mpas {
     };
   }
 
-}  // namespace fv3jedi
+}  // namespace mpas

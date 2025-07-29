@@ -46,6 +46,7 @@ public :: &
    da_operator_addition, &
    da_copy_all2sub_fields, &
    da_copy_sub2all_fields, &
+   da_copy_sub2sub_fields, &
    da_template_pool, &
    !mpas_pool_template_field, &
    da_random, &
@@ -533,6 +534,82 @@ contains
       end do
 
    end subroutine da_copy_sub2all_fields
+
+
+   !***********************************************************************
+   !
+   !  subroutine da_copy_sub2sub_fields
+   !
+   !> \brief   Performs a copy of a sub pool "from" to a sub pool "to"
+   !>                   only for common fields between them.
+   !
+   !-----------------------------------------------------------------------
+   subroutine da_copy_sub2sub_fields(pool_from, pool_to)
+
+      implicit none
+
+      type (mpas_pool_type), pointer, intent(in) :: pool_from
+      type (mpas_pool_type), pointer, intent(out) :: pool_to
+
+      type (mpas_pool_type), pointer :: pool_a, pool_b
+      type (mpas_pool_iterator_type) :: poolItr_a, poolItr_b
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+
+      !
+      ! Iterate over all fields in pool_from, adding them to fields of the same
+      ! name in pool_to
+      !
+      pool_a => pool_from
+      pool_b => pool_to
+      call mpas_pool_begin_iteration(pool_a)
+
+      do while ( mpas_pool_get_next_member(pool_a, poolItr_a) )
+
+         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+         ! so we select only those members of the pool that are fields
+         if (poolItr_a % memberType == MPAS_POOL_FIELD) then
+
+            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+            if (poolItr_a % dataType == MPAS_POOL_REAL) then
+
+             call mpas_pool_begin_iteration(pool_b)
+             do while ( mpas_pool_get_next_member(pool_b, poolItr_b) )
+
+               if ( trim(poolItr_b % memberName).eq.trim(poolItr_a % memberName) ) then
+                  ! Depending on the dimensionality of the field, we need to set pointers of
+                  ! the correct type
+                  if (poolItr_b % nDims == 0) then
+                     call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r0d_ptr_a)
+                     call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r0d_ptr_b)
+                     r0d_ptr_b = r0d_ptr_a
+                  else if (poolItr_b % nDims == 1) then
+                     call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
+                     call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
+                     r1d_ptr_b = r1d_ptr_a
+                     write(message,*) 'Copy sub2sub field MIN/MAX: ',trim(poolItr_b % memberName), &
+                                      minval(r1d_ptr_a),maxval(r1d_ptr_a)
+                     call fckit_log%debug(message)
+                  else if (poolItr_b % nDims == 2) then
+                     call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
+                     call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
+                     r2d_ptr_b = r2d_ptr_a
+                     write(message,*) 'Copy sub2sub field MIN/MAX: ',trim(poolItr_b % memberName), &
+                                      minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     call fckit_log%debug(message)
+                  end if
+
+               !no "scalar" in this case.
+               !else if ( match_scalar(trim(poolItr_b % memberName), trim(ioName)) ) then ! Here we know qx or nx variables are all defined as ioName
+               end if
+             end do
+            end if
+            ! BJJ DO WE NEED Integer type here ?
+         end if
+      end do
+
+   end subroutine da_copy_sub2sub_fields
 
 
    !***********************************************************************
