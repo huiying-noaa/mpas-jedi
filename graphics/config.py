@@ -37,8 +37,8 @@ obsBinVars[vu.obsVarLat] += [bu.identityBinMethod]
 obsBinVars[vu.obsVarNormDep] += [bu.identityBinMethod]
 obsBinVars[vu.obsRegionBinVar] += ['CONUS']
 
-if specialAllSkyBins:
-  obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
+#if specialAllSkyBins:
+#  obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 
 ################################
@@ -262,7 +262,7 @@ modelBinVars[vu.modVarLat] += [bu.identityBinMethod]
 modelBinVars[vu.modVarLat] += [bu.troplatbandsMethod]
 modelBinVars[vu.modVarLev] += [bu.identityBinMethod]
 modelBinVars[vu.modVarDiagPrs] += [bu.identityBinMethod]
-modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
+#modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 # pseudo-2D diagnostic pressure bins with named latitude-band methods
 # priority 1 (used for FCScoreCard)
@@ -313,18 +313,24 @@ ahiGrp = 'ahi'
 amsuaGrp = 'amsua'
 amsuacldGrp = 'amsuacld'
 mhsGrp = 'mhs'
+mhscldGrp = 'mhscld'
+atmsGrp = 'atms'
 iasiGrp = 'iasi'
+crisGrp = 'cris'
 modelGrp = 'model'
 
 anGroupConfig = {
-    convGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:20:00'},
+    convGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     satwindGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:40:00'},
     abiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:00:00'},
     ahiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:00:00'},
     amsuaGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:60:00'}, #bg
-    amsuacldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:25:00'},
-    mhsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:20:00'},
-    iasiGrp: {'npwork': 14, 'npread': 128, 'analyze walltime': '00:50:00'},
+    amsuacldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:45:00'},
+    mhsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
+    mhscldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
+    atmsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
+    iasiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
+    crisGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
     modelGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:30:00'},
 }
 
@@ -418,7 +424,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': abi_g16_binVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
@@ -428,7 +434,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
@@ -438,22 +444,24 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': abi_g16_binVars,
-        'diagNames': pconf.absDiagnostics,
-        'channels': [8,9,10,11,13,14,15,16],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'ahi-clr_himawari8': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
-        'diagNames': pconf.absDiagnostics,
-        'channels': [8,9,10,11,13,14,15,16],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': [1,6,7],
     },
     'amsua_aqua': {
@@ -462,8 +470,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [8, 9],
     },
     'amsua_metop-a': {
         'DiagSpaceGrp': radiance_s,
@@ -471,8 +479,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [5, 6, 9],
     },
     'amsua_metop-b': {
         'DiagSpaceGrp': radiance_s,
@@ -480,7 +488,16 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [8,9],
+        'channels': range(1,16),
+        'analyzed channels': [8, 9],
+    },
+    'amsua_metop-c': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': amsuaGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
         'analyzed channels': [5, 6, 7, 8, 9],
     },
     'amsua_n15': {
@@ -489,8 +506,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [5, 7, 8, 9],
     },
     'amsua_n18': {
         'DiagSpaceGrp': radiance_s,
@@ -498,7 +515,7 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
+        'channels': range(1,16),
         'analyzed channels': [5, 6, 7, 8, 9],
     },
     'amsua_n19': {
@@ -507,30 +524,16 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
-    },
-    'amsua_n19--hydro': {
-        'DiagSpaceGrp': radiance_s,
-        'process': False,
-        'binVarConfigs': polarBinVars,
-        'diagNames': pconf.absDiagnostics,
-        'channels': [1,2,3,15],
-    },
-    'amsua_n19--nohydro': {
-        'DiagSpaceGrp': radiance_s,
-        'process': False,
-        'binVarConfigs': polarBinVars,
-        'diagNames': pconf.absDiagnostics,
-        'channels': [4,5,6,7,9,10,11,12,13,14],
+        'channels': range(1,16),
+        'analyzed channels': [5, 6, 7, 9],
     },
     'amsua-cld_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
         'analyzed channels': [1, 2, 3, 4, 15],
     },
     'amsua-cld_metop-a': {
@@ -538,58 +541,87 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 2, 3, 4, 15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_metop-b': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 2, 3, 4, 15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4],
+    },
+    'amsua-cld_metop-c': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': amsuacldGrp,
+        'binVarConfigs': polarcldBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n15': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 2, 3, 4, 15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n18': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 2, 3, 4, 15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n19': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 2, 3, 4, 15],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4, 15],
     },
     'cris-fsr_npp': {
         'DiagSpaceGrp': radiance_s,
-        'process': False,
+        'process': True,
+        'anGrp': crisGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.absDiagnostics,
-        'channels': [24,26,28,32,37,39],
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
+        'analyzed channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
+    },
+    'cris-fsr_n20': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': crisGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
+        'analyzed channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
+    },
+    'cris-fsr_n21': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': crisGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
+        'analyzed channels': [83, 85, 87, 89, 111, 115, 117, 119, 121, 123, 125, 127, 129, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157, 159, 163, 167, 171, 175, 179, 183, 187, 190, 194, 197, 200, 211, 224, 275, 279, 291, 311, 332, 342, 389, 410, 427, 464, 482, 501, 529, 710, 713, 742, 882, 890, 937, 995, 1008, 1022, 1058],
     },
     'hirs4_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,16),
     },
     'iasi_metop-a': {
@@ -598,8 +630,8 @@ DiagSpaceConfig = {
         'anGrp': iasiGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [16,104,154,254,410,1585,2019,2993,3110],
-        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
+        'analyzed channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
     },
     'iasi_metop-b': {
         'DiagSpaceGrp': radiance_s,
@@ -607,8 +639,8 @@ DiagSpaceConfig = {
         'anGrp': iasiGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [16,104,154,254,410,1585,2019,2993,3110],
-        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
+        'analyzed channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
     },
     'iasi_metop-c': {
         'DiagSpaceGrp': radiance_s,
@@ -616,8 +648,8 @@ DiagSpaceConfig = {
         'anGrp': iasiGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [16,104,154,254,410,1585,2019,2993,3110],
-        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
+        'analyzed channels': [260,262,265,267,275,282,294,296,299,306,323,327,329,335,345,347,350,354,356,360,366,371,373,375,377,379,381,383,386,389,398,401,404,407,410,414,416,426,428,432,434,439,445,457,515,546,552,559,566,571,573,646,662,668,756,867,906,921,1027,1046,1121,1133,1191,1194,1271,1786,1805,1884,1991,2019,2094,2119,2213,2239,2271,2321,2398,2701,2889,2958,2993,3002,3049,3105,3110,5381,5399,5480],
     },
     'mhs_metop-a': {
         'DiagSpaceGrp': radiance_s,
@@ -626,6 +658,7 @@ DiagSpaceConfig = {
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
     },
     'mhs_metop-b': {
         'DiagSpaceGrp': radiance_s,
@@ -634,6 +667,16 @@ DiagSpaceConfig = {
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs_metop-c': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhsGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
     },
     'mhs_n18': {
         'DiagSpaceGrp': radiance_s,
@@ -642,6 +685,7 @@ DiagSpaceConfig = {
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
     },
     'mhs_n19': {
         'DiagSpaceGrp': radiance_s,
@@ -650,40 +694,113 @@ DiagSpaceConfig = {
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs-cld_metop-a': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhscldGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs-cld_metop-b': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhscldGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs-cld_metop-c': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhscldGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs-cld_n18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhscldGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [3, 4, 5],
+    },
+    'mhs-cld_n19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhscldGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,6),
+        'analyzed channels': [4, 5],
+    },
+    'atms_npp': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': atmsGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,23),
+        'analyzed channels': [1,2,3,4,5,6,7,8,9,10,16,17,18,19,20,21,22],
+    },
+    'atms_n20': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': atmsGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,23),
+        'analyzed channels': [1,2,3,4,5,6,7,8,9,10,16,17,18,19,20,21,22],
+    },
+    'atms_n21': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': atmsGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(1,23),
+        'analyzed channels': [1,2,3,4,5,6,7,8,9,10,16,17,18,19,20,21,22],
     },
     'seviri_m08': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': [5],
     },
     'sndrd1_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,16),
     },
     'sndrd2_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,16),
     },
     'sndrd3_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,16),
     },
     'sndrd4_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': pconf.absDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,16),
     },
 #models
