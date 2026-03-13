@@ -243,9 +243,15 @@ if specialAllSkyBins:
 # priority 1b
 abi_g16_binVars = deepcopy(geoirBinVars)
 abi_g16_binVars[pconf.LonLat2D] += [bu.abi_g16]
+abi_g18_binVars = deepcopy(geoirBinVars)
+abi_g18_binVars[pconf.LonLat2D] += [bu.abi_g18]
+abi_g19_binVars = deepcopy(geoirBinVars)
+abi_g19_binVars[pconf.LonLat2D] += [bu.abi_g19]
 
 ahi_himawari8_binVars = deepcopy(geoirBinVars)
 ahi_himawari8_binVars[pconf.LonLat2D] += [bu.ahi_himawari8]
+ahi_himawari9_binVars = deepcopy(geoirBinVars)
+ahi_himawari9_binVars[pconf.LonLat2D] += [bu.ahi_himawari9]
 
 #seviri_m08_binVars = deepcopy(radianceBinVars)
 #seviri_m08_binVars[pconf.LonLat2D] += [bu.seviri_m08]
@@ -318,6 +324,7 @@ atmsGrp = 'atms'
 iasiGrp = 'iasi'
 crisGrp = 'cris'
 modelGrp = 'model'
+tmsGrp = 'tms'
 
 anGroupConfig = {
     convGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
@@ -329,6 +336,7 @@ anGroupConfig = {
     mhsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     mhscldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     atmsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
+    tmsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     iasiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
     crisGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
     modelGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:30:00'},
@@ -453,6 +461,63 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi_g18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g18_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi_g19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g19_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'ahi_himawari9': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': ahiGrp,
+        'binVarConfigs': ahi_himawari9_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi-clr_g18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g18_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi-clr_g19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g19_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'ahi-clr_himawari9': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': ahiGrp,
+        'binVarConfigs': ahi_himawari9_binVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
@@ -850,3 +915,19 @@ DiagSpaceConfig = {
     },
 }
 
+
+# Use common dictionary for Tomorrow.io satellites
+tms_common = {
+    'DiagSpaceGrp': radiance_s,
+    'process': True,
+    'anGrp': tmsGrp,
+    'binVarConfigs': polarBinVars,
+    'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+    'channels': range(1, 13),
+    'analyzed channels': list(range(1, 13)),
+}
+
+# Use copy() so you can tweak params for one satellite without affecting all.
+# range may need to expand as more satellites come online.
+tms_configs = {f'tms_s{i:02d}': tms_common.copy() for i in range(1, 11)}
+DiagSpaceConfig.update(tms_configs)

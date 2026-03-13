@@ -5,9 +5,7 @@ state:
   analytic init:
     method: dcmip-test-4-0
   state variables: &ufoVars
-  # use UFO variables directly in the background State object
-  # note: has to be virtual_temperature and air_pressure
-  - virtual_temperature
+  - air_temperature
   - air_pressure
   date: '2018-04-15T00:00:00Z'
 variables: *ufoVars
@@ -30,4 +28,4 @@ locations:
         obs errors:
         - 1.5
         - 2.1
-tolerance interpolation: 5.0e-3
+tolerance interpolation: 3.0e-4

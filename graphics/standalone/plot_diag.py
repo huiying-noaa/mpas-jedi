@@ -1,21 +1,31 @@
-import os
-import sys
-sys.path.insert(1, '../')
-import numpy as np
-from copy import deepcopy
-import matplotlib
-matplotlib.use('AGG')
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.axes as maxes
-from matplotlib.ticker import MaxNLocator
-import fnmatch
+import argparse
+import glob
 import math
+import os
+import re
+import sys
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, Dict, Optional, cast
+
+# allow importing from parent directory
+sys.path.insert(1, "../")
+
+import matplotlib
+import numpy as np
+import yaml
+
+matplotlib.use("AGG")
 import basic_plot_functions
-import netCDF4 as nc4
 import config as conf
-import var_utils as vu
 import JediDB
+import matplotlib.axes as maxes
+import matplotlib.pyplot as plt
+import netCDF4 as nc4
+import var_utils as vu
+from matplotlib import colormaps
+from matplotlib.ticker import MaxNLocator
+from plot_styles import get_style_params
 
 '''
 Directory Structure for ctest:
@@ -44,17 +54,28 @@ test/
 '''
 
 # need add Ps
-    #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
-    #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bending_angle unit: rad
+# Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
+# Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bending_angle unit: rad
 
-def readdata():
+def readdata(args: argparse.Namespace) -> None:
+  # Load configuration if provided
+  config: Dict[str, Any] = {}
+  if args.config:
+    config_path = Path(args.config)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file {config_path} not found.")
+
+    with open(config_path, "r") as f:
+        # ensure yaml result is treated as a dict for static type checkers
+        config = cast(Dict[str, Any], yaml.safe_load(f) or {})
+
+  diagdir = Path(args.diagdir) # uses .glob method later
 
   imageFmt = 'png' #lower fidelity, faster
   #imageFmt = 'pdf' #higher fidelity, slower
 
   # Diagnostic omb,oma and hofx files located in diagdir
-  # assume obsout_hofx_*.h5 or obsout_da_*.h5 are located '../../' of current standalone folder
-  diagdir    = '../../'
+  # assume obsout_hofx_*.h5 or obsout_da_*.h5 are located in diagdir of current standalone folder
   diagprefix = 'obsout_'
   #diagsuffix = '_*.nc4'  #for ctests
   diagsuffix = '_*.h5'   #for cycling
@@ -65,6 +86,7 @@ def readdata():
   makeDistributionPlots = True
   plot_allinOneDistri = True   # plot profileObsTypes (includes all levels) and sfcObsTypes.
   plot_eachLevelDistri = False # plot every level separately for profileObsTypes.
+  plot_predictorDistri = False  # Default is False; should turn on it with makeDistributionPlots = True
 
   # NOUTER: number of outer iterations
   # can be set as env variable 'NOUTER'
@@ -84,6 +106,13 @@ def readdata():
     'sfc',
   ]
   radianceObsTypes = [
+    'tms_s01',
+    'tms_s02',
+    'tms_s03',
+    'tms_s04',
+    'tms_s05',
+    'tms_s06',
+    'tms_s07',
     'abi_g16',
     'ahi_himawari8',
     'abi-clr_g16',
@@ -123,10 +152,10 @@ def readdata():
     'cris-fsr_n21',
   ]
 
-  analyzedObsTypeGroups = []
-  analyzedObsTypeGroups.append(profileObsTypes)
-  analyzedObsTypeGroups.append(sfcObsTypes)
-  analyzedObsTypeGroups.append(radianceObsTypes)
+  analyzedObsTypes = []
+  analyzedObsTypes.extend(profileObsTypes)
+  analyzedObsTypes.extend(sfcObsTypes)
+  analyzedObsTypes.extend(radianceObsTypes)
 
   # application-dependent ObsGroups for variational and hofx applications
   variationalApp = 'variational'
@@ -173,74 +202,58 @@ def readdata():
     np.array([1050., 950., 850., 750., 650., 550., 450., 350., 250., 150., 50., 0.])
 
   # collect all file names that fit file name format
-  obsoutfiles = []
-  for file in os.listdir(diagdir):
-    if fnmatch.fnmatch(file, diagprefix+'*'+diagsuffix):   # 1tile
-      obsoutfiles.append(diagdir+file)
+  obsoutfiles = list(diagdir.glob(f'{diagprefix}*{diagsuffix}'))
+  if not obsoutfiles:
+      print(f"No obsout files matching '{diagprefix}*{diagsuffix}'")
 
   # Group files by experiment-obstype combination
   #  (e.g., 3dvar_aircraft), where each group
   #  contains files from all PE's
-  exob_groups = [[]]
-  for j, file in enumerate(obsoutfiles):
-    if JediDB.IODAFileIsRanked(file):
-      # exob_group_name excludes everything outside the first/final '_'
-      exob_group_name =  '_'.join(file.split("_")[1:][:-1])
+  exob_groups = {}
+  for filepath in obsoutfiles:
+    # .stem gets filename w/o ext
+    name_parts = filepath.stem.split('_')
+
+    # IODAFileIsRanked expects a str (not PosixPath)
+    if JediDB.IODAFileIsRanked(str(filepath)):
+      # group_name includes everything inside first and final '_'
+      group_name =  '_'.join(name_parts[1:-1])
     else:
-      # Remove suffix .nc or .h5 or .nc4
-      remove_suffix_name = '.'.join(file.split(".")[:-1])
-      # exob_group_name excludes everything outside the first '_'
-      exob_group_name = '_'.join(remove_suffix_name.split("_")[1:])
-    for i, exob_group in enumerate(exob_groups):
-      if exob_group_name in exob_group:
-        # If exob_group with exob_group_name exists, add new file to it
-        update_group = exob_group
-        update_group.append(file)
-        exob_groups[i][:] = update_group
-        break
-      elif i == len(exob_groups)-1:
-        # If group with exob_group_name does not exist, add one
-        new_group = [exob_group_name]
-        new_group.append(file)
-        exob_groups.append(new_group)
-        break
-  exob_groups = exob_groups[1:][:]
+      group_name =  '_'.join(name_parts[1:])
 
-  # Loop over unique experiment-obstype groups
-  for exob_group in exob_groups:
-    expt_obs = exob_group[0]
-    print("Processing ", expt_obs)
+    if group_name not in exob_groups:
+        exob_groups[group_name] = []
 
-    # Determine obstype from expt_obstype string
-    expt_parts = expt_obs.split("_")
-    nstr = len(expt_parts)
-    obstype = 'none'
-    for i in range(0, nstr):
-      obstype_ = '_'.join(expt_parts[i:nstr])
-      for obsTypeGroup in analyzedObsTypeGroups:
-        if obstype_ in obsTypeGroup:
-          obstype = obstype_
+    exob_groups[group_name].append(filepath)
 
-    if obstype == 'none':
-      print('obstype not selected, skipping data: '+expt_obs)
+  # Loop over experiment-obstype groups
+  for expt_obs, files in exob_groups.items():
+    if "_" not in expt_obs:
+      print(f"no obstype in {expt_obs}. skip.")
       continue
 
-    # Sort files based on PE
-    obsFiles = np.array(deepcopy(exob_group[1:]))
-    if JediDB.IODAFileIsRanked(obsFiles[0]):
-      PEs = []
-      for file in obsFiles:
-        print('check file=',file)
-        PEs.append(int(file.split('_')[-1].split('.')[0]))
-      obsFiles = obsFiles[np.argsort(np.array(PEs))]
+    # obstype is everything after first underscore
+    obstype = expt_obs.split("_", 1)[1]
+    # If obstype string is not found in one of the analyzedObsTypes...
+    if not any(obstype in analyzedObsType for analyzedObsType in analyzedObsTypes):
+      print(f'{obstype} not in one of analyzedObsTypes. skip.')
+      continue
+
+    print(f"Processing experiment_obstype {expt_obs}")
+
+    # Sort files based on PE (Processor Element / Rank)
+    obsFiles = np.array(deepcopy(files))
+
+    if JediDB.IODAFileIsRanked(str(obsFiles[0])):
+      # Sorts the list in-place based on the integer value of the last segment
+      obsFiles.sort(key=lambda x: int(Path(x).stem.split('_')[-1]))
 
     # Determine total nlocs
-    nlocs = 0
-    for file in obsFiles:
-      ncDB = nc4.Dataset(file, 'r')
-      ncDB.set_auto_mask(False)
-      nlocs += ncDB.dimensions['Location'].size
-      ncDB.close()
+    def get_nlocs(f):
+      with nc4.Dataset(f, 'r') as ds:
+        return ds.dimensions['Location'].size
+
+    nlocs = sum(get_nlocs(f) for f in obsFiles)
 
     # get some basic info from obsFiles[0]
     ncDB = nc4.Dataset(obsFiles[0], 'r')
@@ -255,12 +268,19 @@ def readdata():
     # assume hofx at first, then check for presence of 'ombgGroup'
     applicationType = hofxApp
     ncVarList = []
+    preds = {}
     for group in ncDB.groups:
+      match = re.search(r'Predictor$', group)
+      if match:
+         preds[group] = match
       if group == ApplicationObsGroups[variationalApp]['ombgGroup']:
         applicationType = variationalApp
       for var in ncDB.groups[group].variables:
         ncVarList+= [group+'/'+var]
 
+    predGroup = []
+    for group, match in preds.items():
+      predGroup+= {group}
     ncDB.close()
 
     obsGroup = ApplicationObsGroups[applicationType].get('obsGroup', None)
@@ -281,7 +301,7 @@ def readdata():
         simulatedVariables = [
           ''.join(var.split("/")[1:])
           for var in ncVarList
-          if (g+'/' == var[:len(g)+1])
+          if var.startswith(g + '/')
         ]
         break
 
@@ -315,7 +335,7 @@ def readdata():
 
     # loop over simulated variables
     for ivar, varName in enumerate(simulatedVariables):
-      print("Working on ", varName)
+      print("Working on", varName)
 
       # assume obs, obserr, qcbg, and errstart ObsGroups are always present
       obs = obsGroup+'/'+varName
@@ -346,6 +366,14 @@ def readdata():
         hofx = hofxGroup+'/'+varName
         obsVars += [hofx]
 
+      # Add Predictor group:
+      pred = None
+      predVars = []
+      if predGroup is not None:
+        for group in predGroup:
+          pred =  group +'/'+varName
+          predVars.append(pred)
+          obsVars += [pred]
       # generate list of required variables to read
       readVars = coordVars + obsVars
 
@@ -459,7 +487,7 @@ def readdata():
         db[var][~passan] = np.NaN
 
       if not np.isfinite(db[omb]).any():
-        print('all values are NaN of inf: ', varName, obstype)
+        print('all values are NaN or inf: ', varName, obstype)
         continue
 
       # diagnose relative omb/oma for GNSSRO, which varies
@@ -495,8 +523,15 @@ def readdata():
           nProfile_ana = len(np.unique(db[record][passan]))
 
         if obstype not in radianceObsTypes:
-          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_bak, "omb_allLevels")
-          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_ana, "oma_allLevels")
+          goodrange: float = np.nanpercentile(np.abs(np.concatenate((db[omb], db[oma])).ravel()), 98)
+          kwargs = {}
+          kwargs['vmin'] = -goodrange
+          kwargs['vmax'] = goodrange
+          params = get_style_params(config, obstype, varName)
+          kwargs.update(params)
+
+          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_bak, "omb_allLevels", **kwargs)
+          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_ana, "oma_allLevels", **kwargs)
 
       if binCoord is not None and binCoord in db:
         binVar = binningCoordinates[binCoord]['varName']
@@ -650,30 +685,40 @@ def readdata():
 
         # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
         if makeDistributionPlots:
-          dotsize = 3.0
           for channel in plotChannels:
             ich = list(nchans).index(channel)
             shortname = varval[1] + str(channel)
 
-            color = "BT"
+            kwargs = dict(
+                vmin=173.15,  # -100C
+                vmax=303.15,  # 30C
+                marker='.',
+                edgecolors='none',
+                cmap=colormaps["nipy_spectral"],
+            )
+            params = get_style_params(config, obstype, shortname)
+            kwargs.update(params)
+
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[obs][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "obs",
-                                        None, None, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "obs", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[bkg][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "bkg",
-                                        None, None, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "bkg", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[ana][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "ana",
-                                        None, None, dotsize, color)
-            dmin = -30
-            dmax = 30
-            color = "hsv"
+                                        obstype, shortname, units, expt_obs, 0, "ana", **kwargs)
+            if plot_predictorDistri:
+              print('plotting predictors distribution for : '+obstype+ 'ch'+str(channel))
+              for ipred, pred in enumerate(predVars):
+                basic_plot_functions.plotDistri(db[latitude], db[longitude], db[pred][:,ich],
+                                        obstype, predGroup[ipred], "ch"+str(channel),
+                                        expt_obs, 0, "ch"+str(channel), **kwargs)
+            goodrange = np.nanpercentile(np.abs(np.concatenate((db[omb][:,ich], db[oma][:,ich]))), 98)
+            kwargs.update({"cmap": plt.colormaps["RdBu_r"]})
+            kwargs.update({"vmin": -goodrange})
+            kwargs.update({"vmax": goodrange})
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "omb",
-                                        dmin, dmax, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "omb", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "oma",
-                                        dmin, dmax, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "oma", **kwargs)
 
 def plotprofile(xVals1, xLabel1,
                 xVals2, xLabel2,
@@ -1057,6 +1102,17 @@ def scatter_one2ones(XVAL, YVALS, LEG, show_stats, XLAB, YLAB, VAR_NAME, UNITS, 
   return 0
 
 def main():
-  readdata()
+    parser = argparse.ArgumentParser(
+        description="Read JEDI output and generate diagnostic plots"
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="Path to optional YAML config file for plot styling",
+    )
+    parser.add_argument("--diagdir", help="Path to data", default="../..")
+    args = parser.parse_args()
+
+    readdata(args)
 
 if __name__ == '__main__': main()

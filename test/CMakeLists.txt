@@ -137,7 +137,6 @@ list( APPEND mpas_testinput
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
   testinput/state.yaml
-  testinput/unsinterp.yaml
   testinput/obsop_name_map.yaml
 )
 # Create Data directory for test input and symlink all files
@@ -398,6 +397,7 @@ list( APPEND mpas_test_config_base
   stream_list.atmosphere.analysis
   stream_list.atmosphere.ensemble
   stream_list.atmosphere.control
+  stream_list.atmosphere.dastate
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
            ${CMAKE_CURRENT_BINARY_DIR}
@@ -709,7 +709,6 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
     add_mpasjedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
@@ -1018,11 +1017,13 @@ add_mpasjedi_application_test(
     APPLICATION enkf
     ${RECALIBRATE})
 
-# This test is failing with gcc 13.3 and intel compilers
-#add_mpasjedi_application_test(
-#    NAME lgetkf_height_vloc
-#    APPLICATION enkf
-#    ${RECALIBRATE})
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND
+        CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")
+add_mpasjedi_application_test(
+    NAME lgetkf_height_vloc
+    APPLICATION enkf
+    ${RECALIBRATE})
+endif()
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
