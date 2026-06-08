@@ -1330,6 +1330,16 @@ subroutine var_nlevels(self, var, nlevels)
          call abor1_ftn(message)
       end if
    else
+      !---------------------------------------------------------------
+      ! Temporary bypass/fix for obs variable PM25
+      ! It is not directly simulated, but calculated with Vader
+      ! huiying.luo@noaa.gov
+      !---------------------------------------------------------------
+      if (trim(var) == "particulatematter2p5Insitu") then
+         nlevels = 1
+         return
+      end if
+
       write(message,*)'--> vars_nlevels: ',trim(var), &
                   ' not available in MPAS domain or self % templated_fields'
       call abor1_ftn(message)
