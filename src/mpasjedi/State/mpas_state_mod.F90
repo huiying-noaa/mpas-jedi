@@ -24,7 +24,6 @@ use ufo_geovals_mod
 use ufo_vars_mod
 
 !MPAS-Model
-use mpas_constants
 use mpas_derived_types
 use mpas_field_routines
 use mpas_kind_types, only: StrKIND
@@ -77,6 +76,7 @@ subroutine add_incr(self, increment)
    real(kind=RKIND), dimension(:,:), pointer :: ptrr2_p, ptrr2_rho, ptrr2_t, ptrr2_th, ptrr2_pp
    real(kind=RKIND), dimension(:,:), pointer :: ptrr2_dp, ptrr2_drho, ptrr2_dt, ptrr2_dth, ptrr2_dsh
    real(kind=RKIND), dimension(:), pointer :: ptrr1_ps, ptrr1_dps
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_2mt => null(), ptrr1_2msh => null()
 
    ! Difference with self_add other is that self%subFields can contain extra fields
    ! beyond increment%subFields and the resolution of increment can be different.
@@ -155,11 +155,21 @@ subroutine add_incr(self, increment)
       kind_op = 'add'
       call da_operator(trim(kind_op), self%subFields, increment%subFields, fld_select = increment%fldnames_ci)
 
+      ! Third, update thermodynamic subFields at surface if requested
+      if (self%geom%update_2mTQ_between_outer_loops) then
+         call self%get('air_temperature_at_2m', ptrr1_2mt)
+         ptrr1_2mt(1:ngrid)  = ptrr1_2mt(1:ngrid) + ptrr2_dt(1,1:ngrid)
+         call self%get('water_vapor_mixing_ratio_wrt_moist_air_at_2m', ptrr1_2msh)
+         ptrr1_2msh(1:ngrid) = ptrr1_2msh(1:ngrid) + ptrr2_dsh(1,1:ngrid)
+      endif
+
       ! Impose positive-definite limits on hydrometeors and moistureFields
       ! note: nonlinear change of variable
       call da_posdef( self%subFields, mpas_hydrometeor_fields)
       call da_posdef( self%subFields, moistureFields)
 
+      ! Force the analyzed refl10cm to be no lower than 0 dBZ
+      call da_posdef( self%subFields, ['equivalent_reflectivity_factor'])
 
       ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       ! note: nonlinear change of variable

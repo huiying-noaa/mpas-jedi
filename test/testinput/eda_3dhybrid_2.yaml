@@ -50,7 +50,7 @@ cost function:
     - smois
     - tslb
     - pressure_p
-    filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
     date: *analysisdate
   background error:
     covariance model: hybrid
@@ -61,7 +61,7 @@ cost function:
           saber block name: BUMP_NICAS
           read:
             io:
-              files prefix: Data/bump/mpas_parametersbump_cov
+              files prefix: Data/bump/mpas_bumpcov
             drivers:
               multivariate strategy: univariate
               read local nicas: true
@@ -93,16 +93,14 @@ cost function:
             active variables: *incvars
             read:
               io:
-                files prefix: Data/bump/mpas_parametersbump_loc
+                files prefix: Data/bump/mpas_bumploc
               drivers:
                 multivariate strategy: duplicated
                 read local nicas: true
-              model:
-                level for 2d variables: last
         members from template:
           template:
             <<: *memberConfig
-            filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
+            filename: Data/480km/bg/ensemble/mem%iMember%/EnsForCov.2018-04-15_00.00.00.nc
           pattern: '%iMember%'
           start: 1
           zero padding: 2
@@ -133,7 +131,7 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 3
     - obs space:
         name: GnssroRefNCEP
@@ -168,10 +166,10 @@ cost function:
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 3
       - filter: ROobserror
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         variable: refractivity
         errmodel: NCEP
     - obs space:
@@ -197,12 +195,12 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         reference: MetaData/stationElevation
         value: GeoVaLs/height_above_mean_sea_level_at_surface
         threshold: 500
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
 output:
   filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc

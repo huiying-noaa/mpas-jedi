@@ -60,6 +60,8 @@ class Geometry : public util::Printable,
   std::vector<size_t> variableSizes(const oops::Variables & vars) const;
   std::vector<real_type> verticalCoord(std::string &) const;
   int getDim(const std::string &) const;
+  double getNNdistance() const;
+  bool isRegional() const;
 
  private:
   Geometry & operator=(const Geometry &);

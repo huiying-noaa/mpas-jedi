@@ -29,7 +29,6 @@ use ufo_vars_mod
 
 !MPAS-Model
 use mpas_abort, only: mpas_dmpar_global_abort
-use mpas_constants
 use mpas_derived_types
 use mpas_dmpar
 use mpas_field_routines
@@ -84,8 +83,9 @@ contains
 
       character (len=*), intent(in) :: fieldName
       logical :: field_is_scalar
-      field_is_scalar = any(trim(fieldName) == &
-                    (/'qv', 'qc', 'qi', 'qr', 'qs', 'qg', 'qh', 'nc', 'ni', 'nr', 'ns', 'ng', 'nh'/))
+      character (len=*), parameter :: scalar_names(*) = &
+                    [character(len=12) ::'qv', 'qc', 'qi', 'qr', 'qs', 'qg', 'qh', 'nc', 'ni', 'nr', 'ns', 'ng', 'nh', 'smoke_fine']
+      field_is_scalar = any(trim(fieldName) == scalar_names)
 
    end function
 

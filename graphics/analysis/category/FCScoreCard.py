@@ -356,9 +356,9 @@ class FCScoreCard(CategoryBinMethodBase):
             nsubplots = nxplots * nyplots
         else:
             nsubplots = nSubplotsPerExp
-            nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+            nxplots = int(np.ceil(np.sqrt(nsubplots)))
             while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-            nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+            nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
         xVals = self.fcTDeltas
 
@@ -418,6 +418,10 @@ class FCScoreCard(CategoryBinMethodBase):
         fig = pu.setup_fig(nxplots, nyplots, subplotWidth, subplotAspect, True)
         iplot = 0
 
+        figureData = {}
+        figureData['xVals'] = list(self.fcTDeltas_totmin)
+        figureData['subplots'] = []
+
         planeLoc = {}
         # file loop
         for diagnosticName in myLoc['diagName']:
@@ -457,7 +461,7 @@ class FCScoreCard(CategoryBinMethodBase):
 
                     planeVals = {}
                     for trait in su.ciTraits:
-                        planeVals[trait] = np.full((nRow, nCol), np.NaN)
+                        planeVals[trait] = np.full((nRow, nCol), np.nan)
 
                     # row loop
                     for iy, row in enumerate(rowIndices):
@@ -521,6 +525,20 @@ class FCScoreCard(CategoryBinMethodBase):
                       sciTicks = False
                       logScale = False
 
+                    subplotData = {}
+                    subplotData['subplotName'] = str(subplotName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dataLabel'] = fcstatDiagLabel
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['rowNames'] = list(rowNames)
+                    subplotData['values'] = {
+                        trait: self.dataYAMLFmtArray(planeVals[trait])
+                        for trait in su.ciTraits
+                    }
+                    figureData['subplots'].append(subplotData)
+
                     # perform subplot agnostic plotting
                     bpf.scoreCard(
                         fig,
@@ -548,3 +566,6 @@ class FCScoreCard(CategoryBinMethodBase):
         # end diagnosticName loop
 
         pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, True, outerWidthFraction, outerHeightFraction)
+
+        # save figure data as yaml
+        self.write_figure_yaml(figureData, dataPath, filename)

@@ -8,6 +8,7 @@ import config as conf
 import basic_plot_functions
 import var_utils as vu
 import h5py as h5
+from matplotlib import colormaps
 
 '''
 Directory structure and file names for ctest:
@@ -148,35 +149,56 @@ def readdata():
                 obsnc = np.asarray(obsnc)
                 stationidnc_array = []
                 recordnc_array = []
-                if (obstype == 'gnssro' or obstype == 'gnssroref'):
-                    obsnc[np.less(obsnc, -999)] = np.NaN
+                if (obstype == 'gnssro' or obstype == 'gnssroref' or obstype == 'gnssrobndropp1d'):
+                    obsnc[np.less(obsnc, -999)] = np.nan
                     stationidnc_array=np.asarray(stationidnc).astype(str)
                     if (test == 'cycling'):
                         recordnc_array=np.asarray(recordNum).astype(str)
-                        recordnc_array[np.isnan(obsnc)]= np.NaN
+                        recordnc_array[np.isnan(obsnc)]= np.nan
                         nrecord = len(set(recordnc_array)) -1
                 else:
                     PreQCnc = nc[PreQC]
-                    obsnc[np.greater(PreQCnc, PreQCMaxvalueConv)] = np.NaN
-                    obsnc[np.less(PreQCnc,PreQCMinvalueConv)] = np.NaN
+                    obsnc[np.greater(PreQCnc, PreQCMaxvalueConv)] = np.nan
+                    obsnc[np.less(PreQCnc,PreQCMinvalueConv)] = np.nan
                     stationidnc_array=np.asarray(stationidnc)
-                stationidnc_array[np.isnan(obsnc)]= np.NaN
+                stationidnc_array[np.isnan(obsnc)]= np.nan
                 nstation = len(set(stationidnc_array)) -1 # -1: 'nan' is also included, so remove it
                 if (obstype == 'satwind' or obstype == 'satwnd'):
                     nstation = 0
-                if ((obstype == 'gnssro' or obstype == 'gnssroref') and test == 'cycling'):
+                if ((obstype == 'gnssro' or obstype == 'gnssroref' or obstype == 'gnssrobndropp1d') and test == 'cycling'):
                     basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nrecord,levbin)
                 else:
                     basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin)
             else:
+                # Map physical channel numbers to file indices
+                channels_in_file = np.asarray(nc["Channel"][:])
+
                 for channel in channels:
-                    obsnc = nc[var][:,channel-1]
-                    PreQCnc = nc[PreQC][:,channel-1]
+                    # find index for this physical channel
+                    idx = np.where(channels_in_file == channel)[0]
+                    if len(idx) == 0:
+                        print(f"Channel {channel} not found — skipping")
+                        continue
+                    idx = idx[0]
+                    obsnc   = nc[var][:, idx]
+                    PreQCnc = nc[PreQC][:, idx]
+                    #obsnc = nc[var][:,channel-1]
+                    #PreQCnc = nc[PreQC][:,channel-1]
                     obsnc = np.asarray(obsnc)
-                    obsnc[np.greater(PreQCnc, PreQCMaxvalueAmsua)] = np.NaN
+                    obsnc[np.greater(PreQCnc, PreQCMaxvalueAmsua)] = np.nan
                     var_name = var_name +'_ch'+ str(channel)
                     nstation = 0
-                    basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin)
+                    kwargs = dict(
+                         vmin=None,
+                         vmax=None,
+                         #vmin=173.15,  # -100C
+                         #vmax=303.15,  # 30C
+                         marker='.',
+                         edgecolors='none',
+                         cmap=colormaps["nipy_spectral"],
+                     )
+                    basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin,**kwargs)
+                    #basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin)
                     var_name = var[9:]
 def main():
     readdata()

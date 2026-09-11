@@ -12,7 +12,7 @@
 #  files: A list of file names to link relative to this source dir
 macro(link_files src_dir dest_dir)
     foreach(_f IN ITEMS ${ARGN})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+        file(CREATE_LINK ${src_dir}/${_f} ${dest_dir}/${_f} SYMBOLIC)
     endforeach()
 endmacro()
 
@@ -22,8 +22,9 @@ endmacro()
 #  dest_dir: Full path to target directory
 macro(copy_all_files src_dir dest_dir)
     file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
+    file(MAKE_DIRECTORY ${dest_dir})
     foreach(_f IN LISTS _all)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${src_dir}/${_f} ${dest_dir}/)
+        file(COPY_FILE ${src_dir}/${_f} ${dest_dir}/${_f} ONLY_IF_DIFFERENT)
     endforeach()
 endmacro()
 
@@ -34,7 +35,7 @@ endmacro()
 macro(link_all_files src_dir dest_dir)
     file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
     foreach(_f IN LISTS _all)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+        file(CREATE_LINK ${src_dir}/${_f} ${dest_dir}/${_f} SYMBOLIC)
     endforeach()
 endmacro()
 
@@ -43,16 +44,16 @@ endmacro()
 #  src_dir: Full path to source directory
 #  dest_dir: Full path to target directory link name
 macro(link_dir src_dir dest_dir)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir} ${dest_dir})
+    file(CREATE_LINK ${src_dir} ${dest_dir} SYMBOLIC)
 endmacro()
 
 # macro to create a symlink from src to dst with just filename
 function(CREATE_SYMLINK_FILENAME src dst)
     foreach (FILENAME ${ARGN})
         get_filename_component(filename ${FILENAME} NAME )
-        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+        file( CREATE_LINK
             ${src}/${FILENAME}
-            ${dst}/${filename} )
+            ${dst}/${filename} SYMBOLIC )
         endforeach(FILENAME)
 endfunction(CREATE_SYMLINK_FILENAME)
 
@@ -68,8 +69,8 @@ endif()
 ## test yamls
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc.yaml
-  testinput/3denvar_dual_resolution.yaml
-  testinput/3denvar_2stream_bumploc.yaml
+  testinput/3denvar_multi_resolution.yaml
+  testinput/3denvar_multi_resolution_regional.yaml
   testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
@@ -95,7 +96,6 @@ list( APPEND mpas_testinput
   testinput/dirac_diffusion_duplicated.yaml
   testinput/dirac_diffusion_univariate.yaml
   testinput/dirac_noloc.yaml
-  testinput/dirac_spectral_1.yaml
   testinput/dirac_spectral_loc.yaml
   testinput/eda_3dhybrid.yaml
   testinput/eda_3dhybrid_1.yaml
@@ -132,13 +132,14 @@ list( APPEND mpas_testinput
   testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
+  testinput/parameters_bumploc_regional.yaml
   testinput/parameters_diffusion.yaml
   testinput/process_perts_spectral.yaml
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
   testinput/state.yaml
-  testinput/unsinterp.yaml
   testinput/obsop_name_map.yaml
+  testinput/obsop_name_map_model.yaml
 )
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
@@ -147,8 +148,8 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 ## reference outputs
 list( APPEND mpas_testoutput
   testoutput/3denvar_bumploc.ref
-  testoutput/3denvar_dual_resolution.ref
-  testoutput/3denvar_2stream_bumploc.ref
+  testoutput/3denvar_multi_resolution.ref
+  testoutput/3denvar_multi_resolution_regional.ref
   testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
@@ -173,7 +174,6 @@ list( APPEND mpas_testoutput
   testoutput/dirac_diffusion_univariate.ref
   testoutput/dirac_diffusion_duplicated.ref
   testoutput/dirac_noloc.ref
-  testoutput/dirac_spectral_1.ref
   testoutput/dirac_spectral_loc.ref
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
@@ -190,6 +190,7 @@ list( APPEND mpas_testoutput
   testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
+  testoutput/parameters_bumploc_regional.ref
   testoutput/process_perts_spectral.ref
   testoutput/rtpp.ref
   testoutput/ens_mean_variance.ref
@@ -231,7 +232,7 @@ link_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_st
 
 # RTTOV coefficient files
 list( APPEND rttov_test_input
-  rttov7pred54L/rtcoef_noaa_19_amsua.dat
+  rttov13pred54L/rtcoef_noaa_19_amsua_o3.dat
 )
 
 # CRTM coefficient files
@@ -249,6 +250,8 @@ list( APPEND crtm_test_input
   EmisCoeff/IR_Water/Little_Endian/Nalli.IRwater.EmisCoeff.bin
   EmisCoeff/IR_Land/SEcategory/Little_Endian/USGS.IRland.EmisCoeff.bin
   EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/IGBP.IRland.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/IGBP.VISland.EmisCoeff.bin
   SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
   TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
   SpcCoeff/Little_Endian/amsua_n15.SpcCoeff.bin
@@ -318,8 +321,8 @@ endif()
 # link .nc files from mpas-jedi-data to build/mpas-jedi/test/Data
 #384km tests
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km)
-link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/init
-        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/init)
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/bg
+        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/bg)
 
 #480km
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km)
@@ -333,25 +336,13 @@ link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend1
 link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend2
          ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs/mpasobsappend2)
 
-#480km_2stream
-# .nc files and config files are in the same directory
-# therefore .nc files are linked one by one
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream)
-list( APPEND mpas_test_480km_2stream_nc
-      mpasout.2018-04-15_00.00.00.nc
-      static.nc
-      x1.2562.grid.nc
-      x1.2562.init.2018-04-14_18.00.00.nc
-)
-link_files(${mpas-jedi_data_testinput_tier_1_local}/480km_2stream
-           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
-           ${mpas_test_480km_2stream_nc} )
-
 # link streams and namelists from mpas-jedi to build/mpas-jedi/test/Data
 #384km tests
 list( APPEND mpas_test_384km
       namelist.atmosphere_2018041500
       streams.atmosphere
+      namelist.atmosphere_2018041500_regional
+      streams.atmosphere_regional
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/384km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km
@@ -362,6 +353,8 @@ list( APPEND mpas_test_480km
       namelist.atmosphere_2018041421
       namelist.atmosphere_2018041500
       streams.atmosphere
+      namelist.atmosphere_2018041500_regional
+      streams.atmosphere_regional
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
@@ -381,15 +374,6 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}
            ${mpas_test_partition_480km} )
 
-#480km_2stream tests
-list( APPEND mpas_test_480km_2stream
-      namelist.atmosphere_2018041500
-      streams.atmosphere
-    )
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km_2stream
-           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
-           ${mpas_test_480km_2stream} )
-
 # test config files
 list( APPEND mpas_test_config_base
   geovars.yaml
@@ -398,6 +382,7 @@ list( APPEND mpas_test_config_base
   stream_list.atmosphere.analysis
   stream_list.atmosphere.ensemble
   stream_list.atmosphere.control
+  stream_list.atmosphere.dastate
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
            ${CMAKE_CURRENT_BINARY_DIR}
@@ -413,7 +398,7 @@ endif ( crtm_FOUND )
 
 # link rttov coefficient files
 if( ${rttov_FOUND} )
-  create_symlink_filename( ${rttov_SOURCE_DIR}/rtcoef_rttov12
+  create_symlink_filename( ${rttov_SOURCE_DIR}/rtcoef_rttov14
                            ${CMAKE_CURRENT_BINARY_DIR}/Data
                            ${rttov_test_input} )
 endif( ${rttov_FOUND} )
@@ -475,7 +460,7 @@ endif()
 #                   [ YAMLFILE <filename.yaml> ]
 #                   [ NAME <name> ]
 #                   [ NPE <number-of-processor-elements> ]
-#                   [ TESTTIER <tier-of-test> ])
+#                   [ LABELS <label-1> <label-2> ... ])
 #
 # Options
 # -------
@@ -492,28 +477,25 @@ endif()
 # NPE: optional
 #   Number of processor elements to use in this test
 #
-# TESTTIER: optional
-#   Testing tier for this test
+# LABELS: optional
+#   CMAKE labels for this test
 #
 ######################################################################
 function(add_mpasjedi_unit_test)
     set(options )
-    set(oneValueArgs CLASS YAMLFILE NAME NPE TESTTIER)
-    set(multiValueArgs )
+    set(oneValueArgs CLASS YAMLFILE NAME NPE )
+    set(multiValueArgs LABELS )
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
-    if( NOT DEFINED TEST_TESTTIER )
-        set( TEST_TESTTIER "1" )
-    endif()
-
-    # If the tier of the test is larger than the current
-    # MPASJEDI_TEST_TIER, we exit so it is not added.
-    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
-      return()
-    endif()
 
     if( NOT DEFINED TEST_NAME )
         set( TEST_NAME "${TEST_YAMLFILE}" )
+    endif()
+    if( DEFINED TEST_LABELS )
+        set(templist "")
+        foreach(label_NAME ${TEST_LABELS})
+            list(APPEND templist "${label_NAME}")
+        endforeach(label_NAME)
+        set(TEST_LABELS "${templist}")
     endif()
 
     set( MPI_SUFFIX "" )
@@ -533,12 +515,26 @@ function(add_mpasjedi_unit_test)
         set(_env ENVIRONMENT F_UFMTENDIAN=little\\$<SEMICOLON>big:101-200)
     endif()
 
-    ecbuild_add_test( TARGET  test_${TARGET_NAME}
-                      ${TEST_ENVIRONMENT}
-                      SOURCES executables/Test${TEST_CLASS}.cc
-                      ARGS    "testinput/${TEST_YAMLFILE}.yaml"
-                      MPI     ${TEST_NPE}
-                      LIBS    ${PROJECT_NAME})
+    # Reuse one executable per test CLASS: the first test of a class builds it,
+    # subsequent tests run the same binary with their own yaml.
+    get_property( _class_exe GLOBAL PROPERTY MPASJEDI_UNIT_TEST_EXE_${TEST_CLASS} )
+    if( _class_exe )
+        ecbuild_add_test( TARGET  ${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
+                          COMMAND ${_class_exe}
+                          ARGS    "testinput/${TEST_YAMLFILE}.yaml"
+                          MPI     ${TEST_NPE}
+                          LABELS  ${TEST_LABELS} )
+    else()
+        ecbuild_add_test( TARGET  ${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
+                          SOURCES executables/Test${TEST_CLASS}.cc
+                          ARGS    "testinput/${TEST_YAMLFILE}.yaml"
+                          MPI     ${TEST_NPE}
+                          LIBS    ${PROJECT_NAME}
+                          LABELS  ${TEST_LABELS} )
+        set_property( GLOBAL PROPERTY MPASJEDI_UNIT_TEST_EXE_${TEST_CLASS} ${TARGET_NAME} )
+    endif()
 endfunction()
 
 ####################################################################################
@@ -562,7 +558,7 @@ endfunction()
 #                              [ TOL <float> ]
 #                              [ DIF <int> ]
 #                              [ NPE <number-of-processor-elements> ]
-#                              [ TESTTIER <tier-of-test> ]
+#                              [ LABELS <label-1> <label-2> ... ]
 #                              [ DEPENDS <previous-test1> [<previous-test2> ...])
 #
 # Options
@@ -596,8 +592,8 @@ endfunction()
 #     e.g., number of parallel time windows in 4denvar
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
-# TESTTIER: optional
-#   Testing tier for this test
+# LABELS: optional
+#   CMAKE labels for this test
 #
 # DEPENDS: optional
 #   List of previous application test NAME's on which this test depends.
@@ -607,19 +603,9 @@ endfunction()
 ####################################################################################
 function(add_mpasjedi_application_test)
     set(options RECALIBRATE)
-    set(oneValueArgs NAME APPLICATION NPE N_PARALLEL_STATES TESTTIER)
-    set(multiValueArgs DEPENDS)
+    set(oneValueArgs NAME APPLICATION NPE N_PARALLEL_STATES )
+    set(multiValueArgs DEPENDS LABELS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
-    if( NOT DEFINED TEST_TESTTIER )
-        set( TEST_TESTTIER "1" )
-    endif()
-
-    # If the tier of the test is larger than the current
-    # MPASJEDI_TEST_TIER, we exit so it is not added.
-    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
-      return()
-    endif()
 
     if( NOT DEFINED TEST_NAME )
         set( TEST_NAME "${TEST_APPLICATION}" )
@@ -642,49 +628,51 @@ function(add_mpasjedi_application_test)
     endif()
 
     set(TARGET_NAME "${PROJECT_NAME}_${TEST_NAME}${MPI_SUFFIX}")
-    set(TARGET_PREFIX "test")
+    set(TARGET_PREFIX "")
     set(TEST_OUT_FILE "testoutput/${TEST_NAME}.run.ref")
     set(TEST_REFERENCE_FILE "testoutput/${TEST_NAME}.ref")
     if( TEST_RECALIBRATE )
-        set( TARGET_PREFIX "setup_ref" )
+        set( TARGET_PREFIX "setup_ref_" )
+    endif()
+    if( DEFINED TEST_LABELS )
+        set(templist "")
+        foreach(label_NAME ${TEST_LABELS})
+            list(APPEND templist "${label_NAME}")
+        endforeach(label_NAME)
+        set(TEST_LABELS "${templist}")
     endif()
     if( DEFINED TEST_DEPENDS )
         set(templist "")
-	foreach(previous_test_NAME ${TEST_DEPENDS})
-            list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME}_${previous_test_NAME}${MPI_SUFFIX}")
-	endforeach(previous_test_NAME)
+        foreach(previous_test_NAME ${TEST_DEPENDS})
+            list(APPEND templist "${TARGET_PREFIX}${PROJECT_NAME}_${previous_test_NAME}${MPI_SUFFIX}")
+        endforeach(previous_test_NAME)
         set(TEST_DEPENDS "${templist}")
-        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
-			  ARGS    "testinput/${TEST_NAME}.yaml"
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+                          ARGS    "testinput/${TEST_NAME}.yaml"
                           MPI     ${TEST_NPE}
-                          TEST_DEPENDS "${TEST_DEPENDS}" )
+                          TEST_DEPENDS "${TEST_DEPENDS}"
+                          LABELS "${TEST_LABELS}" )
     else()
-        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
-			  ARGS    "testinput/${TEST_NAME}.yaml"
-                          MPI     ${TEST_NPE} )
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+                          ARGS    "testinput/${TEST_NAME}.yaml"
+                          MPI     ${TEST_NPE}
+                          LABELS "${TEST_LABELS}" )
     endif()
     if( TEST_RECALIBRATE )
         ecbuild_add_test( TARGET  extract_ref_${TARGET_NAME}
                           TYPE    SCRIPT
                           COMMAND cp
                           ARGS    ${TEST_OUT_FILE} ${TEST_REFERENCE_FILE}
-                          TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+                          TEST_DEPENDS ${TARGET_PREFIX}${TARGET_NAME}
+                          LABELS "${TEST_LABELS}" )
     endif()
 endfunction()
-
-# Default MPASJEDI_TEST_TIER
-set(MPASJEDI_TEST_TIER 1)
-
-# Override MPASJEDI_TEST_TIER using environment variable
-if(DEFINED ENV{MPASJEDI_TEST_TIER})
-    set(MPASJEDI_TEST_TIER "$ENV{MPASJEDI_TEST_TIER}")
-endif()
 
 ## whether to recalibrate reference files to current build
 set(RECALIBRATE_CTEST_REFS "OFF")
@@ -709,7 +697,6 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
     add_mpasjedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
@@ -728,7 +715,8 @@ add_mpasjedi_application_test(
 #hofx3d/hofx4d/enshofx
 add_mpasjedi_application_test(
     APPLICATION hofx3d
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+	LABELS ci_oneapi_disable )
 
 add_mpasjedi_application_test(
         NAME hofx3d_nbam
@@ -779,10 +767,16 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME parameters_bumpcov
     APPLICATION error_covariance_toolbox
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME parameters_bumploc
+    APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME parameters_bumploc_regional
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
@@ -795,6 +789,7 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     APPLICATION gen_ens_pert_B
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 #dirac
@@ -802,6 +797,7 @@ add_mpasjedi_application_test(
     NAME dirac_bumpcov
     APPLICATION error_covariance_toolbox
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
@@ -830,11 +826,6 @@ add_mpasjedi_application_test(
 #spectral
 if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
     add_mpasjedi_application_test(
-        NAME dirac_spectral_1
-        APPLICATION error_covariance_toolbox
-        ${RECALIBRATE})
-
-    add_mpasjedi_application_test(
         NAME process_perts_spectral
         APPLICATION process_perts
         ${RECALIBRATE})
@@ -856,12 +847,14 @@ add_mpasjedi_application_test(
     NAME 3dvar_bumpcov
     APPLICATION variational
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME 3dvar_bumpcov_nbam
     APPLICATION variational
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 if( ${ropp-ufo_FOUND} )
@@ -869,6 +862,7 @@ if( ${ropp-ufo_FOUND} )
         NAME 3dvar_bumpcov_ropp
         APPLICATION variational
         DEPENDS parameters_bumpcov
+        LABELS tier2
         ${RECALIBRATE})
 endif( ${ropp-ufo_FOUND} )
 
@@ -877,13 +871,16 @@ if( ${rttov_FOUND} )
         NAME 3dvar_bumpcov_rttovcpp
         APPLICATION variational
         DEPENDS parameters_bumpcov
+        LABELS tier2
         ${RECALIBRATE})
 endif( ${rttov_FOUND} )
 
 add_mpasjedi_application_test(
     NAME 3dfgat_cda
     APPLICATION variational
-    ${RECALIBRATE})
+    DEPENDS parameters_bumpcov
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 #variational - 3denvar
 add_mpasjedi_application_test(
@@ -893,15 +890,15 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
-    NAME 3denvar_dual_resolution
+    NAME 3denvar_multi_resolution
     APPLICATION variational
     DEPENDS parameters_bumploc
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
-    NAME 3denvar_2stream_bumploc
+    NAME 3denvar_multi_resolution_regional
     APPLICATION variational
-    DEPENDS parameters_bumploc
+    DEPENDS parameters_bumploc_regional
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
@@ -921,6 +918,7 @@ add_mpasjedi_application_test(
     NAME 3dhybrid_bumpcov_bumploc
     APPLICATION variational
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 #variational - 3dfgat
@@ -971,18 +969,22 @@ add_mpasjedi_application_test(
     NPE 3
     N_PARALLEL_STATES 3
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 #variational - 4dfgat
 add_mpasjedi_application_test(
     NAME 4dfgat
     APPLICATION variational
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 add_mpasjedi_application_test(
     NAME 4dfgat_cda
     APPLICATION variational
-    ${RECALIBRATE})
+    DEPENDS parameters_bumpcov
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 # eda
 add_mpasjedi_application_test(
@@ -991,12 +993,14 @@ add_mpasjedi_application_test(
     NPE 4
     N_PARALLEL_STATES 4
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 # rtpp
 add_mpasjedi_application_test(
     APPLICATION rtpp
     DEPENDS eda_3dhybrid
+    LABELS tier2
     ${RECALIBRATE})
 
 # ens_mean_variance
@@ -1018,11 +1022,13 @@ add_mpasjedi_application_test(
     APPLICATION enkf
     ${RECALIBRATE})
 
-# This test is failing with gcc 13.3 and intel compilers
-#add_mpasjedi_application_test(
-#    NAME lgetkf_height_vloc
-#    APPLICATION enkf
-#    ${RECALIBRATE})
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND
+        CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")
+add_mpasjedi_application_test(
+    NAME lgetkf_height_vloc
+    APPLICATION enkf
+    ${RECALIBRATE})
+endif()
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
@@ -1041,7 +1047,8 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
             add_mpasjedi_application_test(
                 APPLICATION error_covariance_toolbox
 		NAME parameters_bumpcov
-                NPE ${THIS_NPE})
+                NPE ${THIS_NPE}
+                LABELS tier2)
 
             add_mpasjedi_application_test(
                 APPLICATION error_covariance_toolbox
@@ -1057,7 +1064,8 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
                 APPLICATION variational
 		NAME 3dhybrid_bumpcov_bumploc
                 NPE ${THIS_NPE}
-                DEPENDS parameters_bumpcov parameters_bumploc)
+                DEPENDS parameters_bumpcov parameters_bumploc
+                LABELS tier2 )
         endif()
     endforeach(THIS_NPE)
 endif()

@@ -222,6 +222,11 @@ fields:
     mpas identity field: hail_number_concentration
     mpas io name: nh
 
+  - field name: equivalent_reflectivity_factor
+    mpas template field: theta
+    mpas identity field: equivalent_reflectivity_factor
+    mpas io name: refl10cm
+
   - field name: moist_air_density
     mpas template field: theta
 
@@ -342,7 +347,7 @@ fields:
   - field name: observable_domain_mask
     mpas template field: u10
 
-  - field name: wind_reduction_factor_at_10m
+  - field name: ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
     mpas template field: u10
     
   - field name: land_type_index_USGS
@@ -408,3 +413,4 @@ fields:
     mpas template field: theta
     mpas identity field: relative_humidity
     mpas io name: relhum
+    mpas io scaling factor: 0.01 # from MPAS unit [percent] to generic unit [fraction] (or ratio)
