@@ -19,6 +19,7 @@ namespace mpas {
 
   static std::map<std::string, std::vector<std::string>> vaderMPASCustomCookbook() {
     return {
+      {"dry_air_density",                   {"DryAirDensity_A"}},	    
       // tv: from t and q
       {"virtual_temperature",          {"AirVirtualTemperature_A"}}
     };
