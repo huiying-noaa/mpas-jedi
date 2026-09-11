@@ -15,6 +15,7 @@
 #include "oops/util/parameters/RequiredParameter.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/ModelData/ModelData.h" 
 #include "mpasjedi/State/State.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
 
