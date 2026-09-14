@@ -84,7 +84,7 @@ contains
       character (len=*), intent(in) :: fieldName
       logical :: field_is_scalar
       character (len=*), parameter :: scalar_names(*) = &
-                    [character(len=12) ::'qv', 'qc', 'qi', 'qr', 'qs', 'qg', 'qh', 'nc', 'ni', 'nr', 'ns', 'ng', 'nh', 'smoke_fine']
+                    [character(len=12) ::'qv', 'qc', 'qi', 'qr', 'qs', 'qg', 'qh', 'nc', 'ni', 'nr', 'ns', 'ng', 'nh', 'smoke_fine', 'dust_fine', 'dust_coarse']
       field_is_scalar = any(trim(fieldName) == scalar_names)
 
    end function
