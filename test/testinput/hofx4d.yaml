@@ -13,7 +13,7 @@ geometry:
   streams_file: "./Data/480km/streams.atmosphere"
 model:
   name: MPAS
-  tstep: PT30M
+  tstep: PT45M
   model variables:
   - air_temperature
   - water_vapor_mixing_ratio_wrt_moist_air
@@ -73,7 +73,8 @@ initial condition:
   - lai
   - smois
   - tslb
-  filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
+  - cldfrac
+  filename: "./Data/480km/bg/mpasout.2018-04-14_21.00.00.nc"
   date: '2018-04-14T21:00:00Z'
 observations:
   observers:
@@ -155,7 +156,6 @@ observations:
     obs operator:
       <<: *crtmobsoper
       Clouds: [Water, Ice, Rain, Snow, Graupel]
-      Cloud_Fraction: 1.0
       obs options:
         <<: *crtmobsopts
   - obs space:
@@ -175,7 +175,7 @@ observations:
       obs options:
         <<: *crtmobsopts
         Sensor_ID: airs_aqua
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: CRIS-NPP
       obsdatain:
@@ -190,10 +190,12 @@ observations:
       channels: 24,26,135,137,332,342,1022,1058
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: cris-fsr_npp
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: IASI-METOPA
       obsdatain:
@@ -208,10 +210,12 @@ observations:
       channels: 16,29,32,35,38,41,44
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
 #    - obs space:
 #        name: ATMS-NPP--ch5-15
 #        obsdatain:
@@ -244,7 +248,6 @@ observations:
 #      obs operator:
 #        <<: *crtmobsoper
 #        Clouds: [Water, Ice, Rain, Snow, Graupel]
-#        Cloud_Fraction: 1.0
 #        obs options:
 #          <<: *crtmobsopts
 #          Sensor_ID: atms_npp

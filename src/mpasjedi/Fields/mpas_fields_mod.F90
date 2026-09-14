@@ -25,7 +25,6 @@ use ufo_geovals_mod, only: ufo_geovals
 
 !MPAS-Model
 use atm_core, only: atm_simulation_clock_init, atm_compute_output_diagnostics
-use mpas_constants
 use mpas_derived_types
 use mpas_kind_types, only: StrKIND
 use mpas_pool_routines
@@ -420,8 +419,8 @@ subroutine read_fields(self, f_conf, vdate)
    ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
    ! associated with this state.  Can be any string as long as it is included within the
    ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
-   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
-   ! unique properties, including the MPAS fields that are read/written.
+   ! are 'background', 'analysis', 'ensemble', 'control', 'dastate', 'da_state'. Each of those
+   ! streams has unique properties, including the MPAS fields that are read/written.
    streamID = 'background'
    if (f_conf%get("stream name", str)) then
      streamID = str
@@ -518,6 +517,9 @@ subroutine update_diagnostic_fields(geom, subFields, ngrid)
    call theta_to_temp(theta % array(:,1:ngrid), pressure % array(:,1:ngrid), temperature % array(:,1:ngrid))
    call w_to_q( scalars % array(index_qv,:,1:ngrid) , specific_humidity % array(:,1:ngrid) )
 
+   ! Only accept background refl10cm no lower than 0 dBZ
+   call da_posdef( subFields, ['equivalent_reflectivity_factor'])
+
 end subroutine update_diagnostic_fields
 
 ! ------------------------------------------------------------------------------
@@ -564,8 +566,8 @@ subroutine write_fields(self, f_conf, vdate)
    ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
    ! associated with this state.  Can be any string as long as it is included within the
    ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
-   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
-   ! unique properties, including the MPAS fields that are read/written.
+   ! are 'background', 'analysis', 'ensemble', 'control', 'dastate', 'da_state'. Each of those
+   ! streams has unique properties, including the MPAS fields that are read/written.
    streamID = 'da_state'
    if (f_conf%get("stream name", str)) then
      streamID = str
@@ -1434,10 +1436,11 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             if (poolItr % dataType == MPAS_POOL_REAL) then
                call meta%set('interp_type', 'default')
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
-               call meta%set('interp_type', 'integer')
+               call meta%set('interp_type', 'nearest')
             else
                call abor1_ftn('poolItr % dataType .NE. real OR integer, unexpected')
             endif
+            call meta%set('nearest 3d level', 'bottom')
 
             ! Set flag
             var_found = .true.

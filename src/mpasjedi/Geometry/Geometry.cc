@@ -264,4 +264,16 @@ int Geometry::getDim(const std::string & dim) const {
   return -1;
 }
 // -----------------------------------------------------------------------------
+double Geometry::getNNdistance() const {
+  double NNdistance;
+  mpas_geo_get_NN_distance_f90(keyGeom_, NNdistance);
+  return NNdistance;
+}
+// -----------------------------------------------------------------------------
+bool Geometry::isRegional() const {
+  bool isRegional;
+  mpas_geo_is_regional_f90(keyGeom_, isRegional);
+  return isRegional;
+}
+// -----------------------------------------------------------------------------
 }  // namespace mpas

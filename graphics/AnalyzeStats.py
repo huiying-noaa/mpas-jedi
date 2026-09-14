@@ -12,8 +12,10 @@ import logging
 import logsetup
 import multiprocessing as mp
 import os
+import pandas as pd
 
 from analysis.Analyses import Analyses
+from analysis.AnalysisBase import AnalysisBase
 import analysis.StatisticsDatabase as sdb
 
 _logger = logging.getLogger(__name__)
@@ -66,12 +68,11 @@ def main():
       # where each pair is colon delimited, e.g. exp1:long_name_exp1,exp2:long_name_exp2
       exps = args.experiments.split(',')
 
-    firstCycle = None
-    lastCycle = None
-    if args.firstCycle:
-      firstCycle= dt.datetime.strptime(args.firstCycle, '%Y%m%dT%H')
-    if args.lastCycle:
-      lastCycle= dt.datetime.strptime(args.lastCycle, '%Y%m%dT%H')
+    firstCycle = pd.to_datetime(args.firstCycle)
+    lastCycle = pd.to_datetime(args.lastCycle)
+
+    # Set figure output file type globally for all AnalysisBase-derived analyses.
+    AnalysisBase.figureFileType = args.figureFileType
 
     anconf.adjust_experiments(args.controlExperiment, exps, args.verifySpace, args.verifyType, firstCycle, lastCycle)
 

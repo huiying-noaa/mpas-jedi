@@ -68,6 +68,10 @@ Increment::Increment(const Geometry & resol,
   eckit::LocalConfiguration conf;
   // Use oops interpolator for consistency with State resolution change.
   conf.set("local interpolator type", "oops unstructured grid interpolator");
+  if (other.geom_.isRegional()) {
+    const double NNdistance = other.geom_.getNNdistance();
+    conf.set("regional nn fill distance in km", NNdistance);
+  }
   oops::GlobalInterpolator interp(conf, source_geom, target_fs, geom_.getComm());
 
   atlas::FieldSet source{};
@@ -274,11 +278,15 @@ size_t Increment::serialSize() const {
 constexpr real_type SerializeCheckValue = -54321.98765;
 void Increment::serialize(std::vector<real_type> & vect) const {
   // Serialize the field
-  size_t nn;
-  mpas_increment_serial_size_f90(keyInc_, nn);
-  std::vector<real_type> vect_field(nn, 0.0);
-  mpas_increment_serialize_f90(keyInc_, nn, vect_field.data());
-  vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+  const size_t offset = vect.size();
+  const size_t serial_size = serialSize();
+  const size_t inc_size = serial_size - 1 - time_.serialSize();
+
+  // reserve performs a single allocation for Increment and DateTime buffers
+  vect.reserve(vect.size() + serial_size);
+
+  vect.resize(vect.size() + inc_size);
+  mpas_increment_serialize_f90(keyInc_, inc_size, vect.data() + offset);
 
   // Magic value placed in serialization; used to validate deserialization
   vect.push_back(SerializeCheckValue);

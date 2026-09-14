@@ -47,8 +47,8 @@ cost function:
     - lai
     - smois
     - tslb
-    #- pressure_p  #Should we add this to be consistent with other tests? Just for diagnostics, no change in the result.
-    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    - pressure_p
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:
     covariance model: hybrid
@@ -59,7 +59,7 @@ cost function:
           saber block name: BUMP_NICAS
           read:
             io:
-              files prefix: Data/bump/mpas_parametersbump_cov
+              files prefix: Data/bump/mpas_bumpcov
             drivers:
               multivariate strategy: univariate
               read local nicas: true
@@ -91,22 +91,20 @@ cost function:
             active variables: *incvars
             read:
               io:
-                files prefix: Data/bump/mpas_parametersbump_loc
+                files prefix: Data/bump/mpas_bumploc
               drivers:
                 multivariate strategy: duplicated
                 read local nicas: true
-              model:
-                level for 2d variables: last
         members:
-        - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+        - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
           <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+        - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
           <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+        - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
           <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+        - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
           <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+        - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
           <<: *memberConfig
       weight:
         value: 0.5
@@ -132,7 +130,7 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 3
     - obs space:
         name: GnssroRefNCEP
@@ -167,10 +165,10 @@ cost function:
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 3
       - filter: ROobserror
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         variable: refractivity
         errmodel: NCEP
     - obs space:
@@ -196,12 +194,12 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         reference: MetaData/stationElevation
         value: GeoVaLs/height_above_mean_sea_level_at_surface
         threshold: 500
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
 output:
   filename: "Data/states/mpas.3dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"

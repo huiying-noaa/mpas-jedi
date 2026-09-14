@@ -40,7 +40,8 @@ state:
   - lai
   - smois
   - tslb
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  - cldfrac
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 observations:
   observers:
@@ -176,7 +177,6 @@ observations:
     obs operator:
       <<: *crtmobsoper
       Clouds: [Water, Ice, Rain, Snow, Graupel]
-      Cloud_Fraction: 1.0
       obs options:
         <<: *crtmobsopts
   - obs space:
@@ -196,7 +196,7 @@ observations:
       obs options:
         <<: *crtmobsopts
         Sensor_ID: airs_aqua
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: CRIS-NPP
       obsdatain:
@@ -211,10 +211,12 @@ observations:
       channels: 28,32,143,145,224,275,995,1008
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: cris-fsr_npp
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: IASI-METOPA
       obsdatain:
@@ -229,10 +231,12 @@ observations:
       channels: &iasi_metop-a_channels 16,29,32,35,38,41,44
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
 #    get values:
 #      tropopause pressure method: wmo
     obs filters:
@@ -298,7 +302,6 @@ observations:
 #      obs operator:
 #        <<: *crtmobsoper
 #        Clouds: [Water, Ice, Rain, Snow, Graupel]
-#        Cloud_Fraction: 1.0
 #        obs options:
 #          <<: *crtmobsopts
 #          Sensor_ID: atms_npp
@@ -334,7 +337,7 @@ observations:
       observation vertical coordinate: height
       interpolation method: linear
 
-      hofx scaling field: wind_reduction_factor_at_10m
+      hofx scaling field: ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
       hofx scaling field group: GeoVaLs
       variables:
       - name: windEastward

@@ -32,12 +32,20 @@ class GeometryParameters : public oops::Parameters {
   /// can not be true for forecast and hofx (4D) applications
   oops::Parameter<bool> deallocate_non_da_fields{ "deallocate non-da fields", false, this};
 
+  /// option to update 2mTQ between outer loops
+  oops::Parameter<bool> update_2mTQ_between_outer_loops{
+      "update 2mTQ between outer loops", false, this};
+
   /// yaml filename that contains the list of variables to be kept
   /// when "deallocate non-da fields" is true
   oops::Parameter<std::string> kept_fields_file{ "kept fields file", "keptvars.yaml", this};
 
   /// yaml filename that contains configurations of templated field names
   oops::Parameter<std::string> template_fields_file{ "template fields file", "geovars.yaml", this};
+
+  /// distance for the nearest-neighbor filling in OOPS unstructured interpolator
+  oops::Parameter<double> regional_nn_fill_distance_in_km{
+      "regional nn fill distance in km", 500.0, this};
 
   /// vertical coordinate for BUMP to be used in the parameter estimate application
   /// not needed for hofx and variational applications

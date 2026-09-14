@@ -14,19 +14,20 @@ background:
   - northward_wind
   - water_vapor_mixing_ratio_wrt_moist_air
   - air_pressure_at_surface
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: &date "2018-04-15T00:00:00Z"
 background error:
   covariance model: SABER
-  saber central block:
-    saber block name: Hybrid
-    components:
+  covariance type: hybrid
+  run components recursively: true
+  components:
     ###########################################################################
     # Waveband 1 - F14 grid
     ###########################################################################
-    - weight:
+  - weight:
         value: 1.0
-      covariance:
+    covariance:
+        covariance type: ensemble
         ensemble geometry:
           function space: StructuredColumns
           grid:
@@ -43,14 +44,10 @@ background error:
               date: *date
               filepath: Data/spectral/wb1_F15_inc_%MEM%
               variables: *vars
-        saber central block:
-          saber block name: Ensemble
-          # FunctionSpace-specific localization, not on model Geometry.
-          localization:
+        # FunctionSpace-specific localization, not on model Geometry.
+        localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
               # localization for low-waveband component of ensemble
               # (full inter-level and inter-variables localization)
               function:
@@ -58,6 +55,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars
@@ -85,9 +83,10 @@ background error:
     ###########################################################################
     # Waveband 2 - F14 grid
     ###########################################################################
-    - weight:
+  - weight:
         value: 1.0
-      covariance:
+    covariance:
+        covariance type: ensemble
         ensemble geometry:
           function space: StructuredColumns
           grid:
@@ -104,14 +103,10 @@ background error:
               date: *date
               filepath: Data/spectral/wb2_F15_inc_%MEM%
               variables: *vars
-        saber central block:
-          saber block name: Ensemble
-          # FunctionSpace-specific localization, not on model Geometry.
-          localization:
+        # FunctionSpace-specific localization, not on model Geometry.
+        localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
             # Moderate horizontal localization
             # (although full inter-level and inter-variables localization)
               function:
@@ -119,6 +114,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars
@@ -141,9 +137,10 @@ background error:
     ###########################################################################
     # Waveband 3 - From Residual (on mpas gird)
     ###########################################################################
-    - weight:
+  - weight:
         value: 1.0
-      covariance:
+    covariance:
+        covariance type: ensemble
         ensemble pert:
           date: *date
           members from template:
@@ -153,14 +150,10 @@ background error:
               date: *date
               filename: Data/spectral/wb3_mpas480_inc_mb%MEM%
               variables: *vars
-        saber central block:
-          saber block name: Ensemble
-          # FunctionSpace-specific localization, on model Geometry.
-          localization:
+        # FunctionSpace-specific localization, on model Geometry.
+        localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
               # localization for high-waveband component of ensemble
               # (although full inter-level and inter-variables localization)
               function:
@@ -168,6 +161,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars
@@ -190,9 +184,9 @@ dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123 ]
   dirLons: [ 130.11182691,-102.95294521 ]
-  ildir: 1
-  dirvar: air_temperature
+  dirLevs: [1, 1]
+  dirVars: [air_temperature, air_temperature]
 output dirac:
-  stream name: control
   filename: Data/spectral/mpas.spectral_loc_%id%.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control
