@@ -15,6 +15,7 @@
 #include "mpasjedi/Geometry/Geometry.h"
 #include "mpasjedi/Increment/Increment.h"
 #include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
+#include "mpasjedi/ModelData/ModelData.h"
 #include "mpasjedi/State/State.h"
 
 namespace mpas {
