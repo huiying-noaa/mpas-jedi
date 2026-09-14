@@ -22,7 +22,7 @@ namespace mpas {
       // for temp recipe testing
       {"dry_air_density",                   {"DryAirDensity_A"}},
       // pm25 from fine smoke and dust in RRFSv2
-      {"mass_density_of_particulate_matter_2p5_in_air", {"ParticulateMatter2p5_C"}}
+      {"mass_density_of_particulate_matter_2p5_in_air", {"ParticulateMatter2p5_C"}},
       // tv: from t and q 
       {"virtual_temperature",          {"AirVirtualTemperature_A"}}
     };
