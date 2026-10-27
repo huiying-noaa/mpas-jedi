@@ -20,7 +20,9 @@ namespace mpas {
   static std::map<std::string, std::vector<std::string>> vaderMPASCustomCookbook() {
     return {
       // pm25 from fine smoke and dust in RRFS
-      {"mass_density_of_particulate_matter_2p5_in_air", {"ParticulateMatter2p5_B"}}
+      {"mass_density_of_particulate_matter_2p5_in_air", {"ParticulateMatter2p5_B"}},
+      // tv: from t and q 
+      {"virtual_temperature",          {"AirVirtualTemperature_A"}}
     };
   }
 
